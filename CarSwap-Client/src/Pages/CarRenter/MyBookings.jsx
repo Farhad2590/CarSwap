@@ -86,24 +86,8 @@ const MyBookings = () => {
   const [paymentLoading, setPaymentLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
 
-  useEffect(() => {
-    const queryParams = new URLSearchParams(window.location.search);
-    const paymentStatus = queryParams.get("payment");
-
-    if (paymentStatus === "success") {
-      toast.success("Payment completed successfully!");
-      window.history.replaceState({}, document.title, window.location.pathname);
-      fetchBookings();
-    } else if (paymentStatus === "failed") {
-      toast.error("Payment failed. Please try again.");
-      window.history.replaceState({}, document.title, window.location.pathname);
-    } else if (paymentStatus === "cancelled") {
-      toast.error("Payment was cancelled.");
-      window.history.replaceState({}, document.title, window.location.pathname);
-    }
-  }, []);
-
   const { user } = useAuth();
+  // const navigate = useNavigate();
 
   const fetchBookings = async () => {
     try {
@@ -114,15 +98,76 @@ const MyBookings = () => {
       setLoading(false);
     } catch (error) {
       console.error("Failed to fetch bookings:", error);
+      toast.error("Failed to load bookings");
       setLoading(false);
     }
   };
-
   useEffect(() => {
     if (user?.email) {
       fetchBookings();
+
+      // Check for payment result in URL params
+      const queryParams = new URLSearchParams(window.location.search);
+      const paymentStatus = queryParams.get("payment");
+      const bookingId = queryParams.get("booking_id");
+      const error = queryParams.get("error");
+      const tranId = queryParams.get("tran_id");
+
+      if (paymentStatus && bookingId) {
+        // Remove query params from URL
+        window.history.replaceState(
+          {},
+          document.title,
+          window.location.pathname
+        );
+
+        if (paymentStatus === "success") {
+          console.log(
+            `Payment successful - Transaction ID: ${tranId}, Booking ID: ${bookingId}`
+          );
+          toast.success("Payment completed successfully!");
+          fetchBookings();
+        } else {
+          console.error(
+            `Payment failed - Booking ID: ${bookingId}, Error: ${
+              error || "Unknown error"
+            }, Transaction ID: ${tranId || "N/A"}`
+          );
+          toast.error(`Payment failed: ${error || "Unknown error"}`);
+        }
+      }
     }
   }, [user?.email]);
+
+  const handleMakePayment = async () => {
+    if (!currentBooking) return;
+
+    setPaymentLoading(true);
+    try {
+      const response = await axios.post(
+        `http://localhost:9000/booking/${currentBooking._id}/payment`,
+        {
+          amount: currentBooking.advanceAmount,
+          email: user?.email,
+        }
+      );
+
+      if (response.data.success && response.data.paymentUrl) {
+        // Open payment URL in a new tab
+        window.location.href = response.data.paymentUrl;
+      } else {
+        throw new Error("Payment URL not received");
+      }
+    } catch (error) {
+      console.error("Failed to initiate payment:", error);
+      toast.error(
+        error.response?.data?.error ||
+          "Failed to initiate payment. Please try again."
+      );
+    } finally {
+      setPaymentLoading(false);
+    }
+  };
 
   const handleViewDetails = async (booking) => {
     setCurrentBooking(booking);
@@ -144,32 +189,33 @@ const MyBookings = () => {
     }
   };
 
-  const handleMakePayment = async () => {
-    setPaymentLoading(true);
-    try {
-      const response = await axios.post(
-        `http://localhost:9000/booking/${currentBooking._id}/payment`,
-        {
-          amount: currentBooking.advanceAmount,
-          email: user?.email,
-        }
-      );
+  // const handleMakePayment = async () => {
+  //   setPaymentLoading(true);
+  //   try {
+  //     const response = await axios.post(
+  //       `http://localhost:9000/booking/${currentBooking._id}/payment`,
+  //       {
+  //         amount: currentBooking.advanceAmount,
+  //         email: user?.email,
+  //       }
+  //     );
 
-      if (response.data.success && response.data.paymentUrl) {
-        window.location.href = response.data.paymentUrl;
-      } else {
-        throw new Error("Payment URL not received");
-      }
-    } catch (error) {
-      console.error("Failed to initiate payment:", error);
-      toast.error(
-        error.response?.data?.error ||
-          "Failed to initiate payment. Please try again."
-      );
-    } finally {
-      setPaymentLoading(false);
-    }
-  };
+  //     if (response.data.success && response.data.paymentUrl) {
+  //       // Open payment URL in the same window
+  //       window.location.href = response.data.paymentUrl;
+  //     } else {
+  //       throw new Error("Payment URL not received");
+  //     }
+  //   } catch (error) {
+  //     console.error("Failed to initiate payment:", error);
+  //     toast.error(
+  //       error.response?.data?.error ||
+  //         "Failed to initiate payment. Please try again."
+  //     );
+  //   } finally {
+  //     setPaymentLoading(false);
+  //   }
+  // };
 
   const handleMarkPickedUp = async () => {
     setActionLoading(true);

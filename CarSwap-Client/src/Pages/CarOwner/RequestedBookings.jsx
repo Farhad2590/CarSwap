@@ -49,9 +49,9 @@ const statusConfig = {
     text: "Picked & Payment Done",
     icon: <CheckCircle className="h-4 w-4" />,
   },
-  car_delivered: {
+  delivered_to_owner: {
     color: "bg-emerald-600 text-white border border-emerald-700",
-    text: "Car Delivered",
+    text: "Delivered to Owner",
     icon: <CheckCircle className="h-4 w-4" />,
   },
   completed: {

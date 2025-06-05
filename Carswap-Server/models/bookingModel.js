@@ -50,9 +50,22 @@ class BookingModel {
     );
   }
 
-  static async markAdvancePaid(bookingId, paymentDetails) {
+  static async updateBookingStatus(bookingId, status) {
     const collection = await this.getCollection();
     return collection.updateOne(
+      { _id: getObjectId(bookingId) },
+      {
+        $set: {
+          status: status,
+          updatedAt: new Date(),
+        },
+      }
+    );
+  }
+
+  static async markAdvancePaid(bookingId, paymentDetails) {
+    const collection = await this.getCollection();
+    const result = await collection.updateOne(
       { _id: getObjectId(bookingId) },
       {
         $set: {
@@ -63,6 +76,12 @@ class BookingModel {
         },
       }
     );
+
+    if (result.modifiedCount === 0) {
+      throw new Error("Failed to update booking status to advance_paid");
+    }
+
+    return this.getBookingDetails(bookingId);
   }
 
   static async setPickupDetails(bookingId, pickupDetails) {
@@ -94,13 +113,14 @@ class BookingModel {
     );
   }
 
+  // Fixed: Changed status from "car_delivered" to "delivered_to_owner" to match frontend expectations
   static async markDelivered(bookingId) {
     const collection = await this.getCollection();
     return collection.updateOne(
       { _id: getObjectId(bookingId) },
       {
         $set: {
-          status: "car_delivered",
+          status: "delivered_to_owner", // Changed from "car_delivered" to match frontend
           updatedAt: new Date(),
           deliveredAt: new Date(),
         },

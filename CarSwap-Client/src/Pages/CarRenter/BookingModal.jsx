@@ -202,7 +202,6 @@ const BookingModal = ({ isOpen, onClose, car, owner }) => {
         nidImage: nidUrl,
 
         // Car Details for Reference
-        
 
         // Rental Period Details
         startDate: biddingData.startDate,
@@ -232,12 +231,11 @@ const BookingModal = ({ isOpen, onClose, car, owner }) => {
 
         // Verification and Status
         renterVerificationStatus: isVerified ? "Verified" : "Pending",
-        status: "pending",
+        status: "pending_acceptance",
         biddingType: "initial_request",
 
         // Terms and Agreement
         agreeToTerms: biddingData.agreeToTerms,
-
       };
 
       // Log the data being sent for debugging
@@ -496,7 +494,9 @@ const BookingModal = ({ isOpen, onClose, car, owner }) => {
                         <div className="flex flex-col items-center justify-center pt-5 pb-6">
                           <Upload className="w-8 h-8 mb-4 text-gray-400" />
                           <p className="mb-2 text-sm text-gray-500">
-                            <span className="font-semibold">Click to upload</span>{" "}
+                            <span className="font-semibold">
+                              Click to upload
+                            </span>{" "}
                             or drag and drop
                           </p>
                           <p className="text-xs text-gray-500">
@@ -531,7 +531,9 @@ const BookingModal = ({ isOpen, onClose, car, owner }) => {
                         <div className="flex flex-col items-center justify-center pt-5 pb-6">
                           <Upload className="w-8 h-8 mb-4 text-gray-400" />
                           <p className="mb-2 text-sm text-gray-500">
-                            <span className="font-semibold">Click to upload</span>{" "}
+                            <span className="font-semibold">
+                              Click to upload
+                            </span>{" "}
                             or drag and drop
                           </p>
                           <p className="text-xs text-gray-500">

@@ -1,28 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { Car, Calendar, MapPin, DollarSign, Eye, Edit, Trash2, Clock, CheckCircle, XCircle, AlertCircle, User } from 'lucide-react';
+import useAuth from '../../hooks/useAuth';
 
 const MyCar = () => {
   const [myCars, setMyCars] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [userEmail, setUserEmail] = useState('');
+  // const [user?.email, setuser?.email] = useState('');
   const [activeTab, setActiveTab] = useState('all'); // all, pending, approved, rejected
   const [verificationStatus, setVerificationStatus] = useState(null);
-
-  // Get user email from localStorage or context (replace with your auth logic)
-  useEffect(() => {
-    // Replace this with your actual user authentication logic
-    const email = localStorage.getItem('userEmail') || 'farhadhossen2590@gmail.com';
-    setUserEmail(email);
-  }, []);
+  const {user} = useAuth();
 
   // Fetch user's car posts
   const fetchMyCars = async () => {
-    if (!userEmail) return;
+    if (!user?.email) return;
     
     try {
       setLoading(true);
-      const response = await fetch(`http://localhost:9000/cars/owner/${encodeURIComponent(userEmail)}`);
+      const response = await fetch(`http://localhost:9000/cars/owner/${encodeURIComponent(user?.email)}`);
       
       if (!response.ok) {
         throw new Error('Failed to fetch car posts');
@@ -40,10 +35,10 @@ const MyCar = () => {
 
   // Fetch user verification status
   const fetchVerificationStatus = async () => {
-    if (!userEmail) return;
+    if (!user?.email) return;
     
     try {
-      const response = await fetch(`http://localhost:9000/api/cars/user/verification-status/${encodeURIComponent(userEmail)}`);
+      const response = await fetch(`http://localhost:9000/api/cars/user/verification-status/${encodeURIComponent(user?.email)}`);
       
       if (response.ok) {
         const data = await response.json();
@@ -55,11 +50,11 @@ const MyCar = () => {
   };
 
   useEffect(() => {
-    if (userEmail) {
+    if (user?.email) {
       fetchMyCars();
       fetchVerificationStatus();
     }
-  }, [userEmail]);
+  }, [user?.email]);
 
   // Filter cars based on active tab
   const filteredCars = myCars.filter(car => {

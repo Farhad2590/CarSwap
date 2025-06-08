@@ -73,29 +73,21 @@ function getStatusBadge(status) {
   );
 }
 
-function BookingDetailsModal({
+function OwnerBookingDetailsModal({
   visible,
   onClose,
-  carDetails,
+  carDetails,  
+  onComplete,
   partyDetails,
   currentBooking,
-  userRole, // "owner" or "renter"
-  onMakePayment,
-  onMarkDelivered,
-  onMarkPickedUp,
-  onMarkPickedAndPaymentDone,
-  onComplete,
   onSetPickupDetails,
+  onMarkPickedAndPaymentDone,
   pickupDetails,
   setPickupDetails,
-  paymentLoading,
   actionLoading,
+  
 }) {
   if (!visible || !currentBooking || !carDetails || !partyDetails) return null;
-  console.log("Status:", currentBooking.status);
-  console.log("User Role:", userRole);
-  console.log("onComplete function:", typeof onComplete);
-  console.log("actionLoading:", actionLoading);
 
   const formatDate = (dateString) => {
     const options = { year: "numeric", month: "short", day: "numeric" };
@@ -233,10 +225,10 @@ function BookingDetailsModal({
               </div>
             </div>
 
-            {/* Party Information */}
+            {/* Renter Information */}
             <div className="bg-white rounded-xl p-6 border-2 border-primary shadow-sm">
               <h3 className="text-xl font-bold text-primary mb-6">
-                {userRole === "renter" ? "Owner" : "Renter"} Information
+                Renter Information
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <div className="light-bg p-4 rounded-lg border border-gray-100 shadow-sm">
@@ -263,36 +255,22 @@ function BookingDetailsModal({
                     {partyDetails.phone}
                   </span>
                 </div>
-                {userRole === "owner" && (
-                  <>
-                    <div className="light-bg p-4 rounded-lg border border-gray-100 shadow-sm">
-                      <span className="font-semibold text-primary block mb-1">
-                        License
-                      </span>
-                      <span className="text-custom text-lg">
-                        {currentBooking.renterLicense}
-                      </span>
-                    </div>
-                    <div className="light-bg p-4 rounded-lg border border-gray-100 shadow-sm">
-                      <span className="font-semibold text-primary block mb-1">
-                        Verification Status
-                      </span>
-                      <span className="text-custom text-lg capitalize">
-                        {currentBooking.renterVerificationStatus?.toLowerCase()}
-                      </span>
-                    </div>
-                  </>
-                )}
-                {userRole === "renter" && (
-                  <div className="light-bg p-4 rounded-lg border border-gray-100 shadow-sm">
-                    <span className="font-semibold text-primary block mb-1">
-                      Verification Status
-                    </span>
-                    <span className="text-custom text-lg capitalize">
-                      {partyDetails.verificationStatus?.toLowerCase()}
-                    </span>
-                  </div>
-                )}
+                <div className="light-bg p-4 rounded-lg border border-gray-100 shadow-sm">
+                  <span className="font-semibold text-primary block mb-1">
+                    License
+                  </span>
+                  <span className="text-custom text-lg">
+                    {currentBooking.renterLicense}
+                  </span>
+                </div>
+                <div className="light-bg p-4 rounded-lg border border-gray-100 shadow-sm">
+                  <span className="font-semibold text-primary block mb-1">
+                    Verification Status
+                  </span>
+                  <span className="text-custom text-lg capitalize">
+                    {currentBooking.renterVerificationStatus?.toLowerCase()}
+                  </span>
+                </div>
               </div>
             </div>
 
@@ -407,214 +385,94 @@ function BookingDetailsModal({
                 )}
               </div>
             </div>
-            <div className="bg-yellow-100 border border-yellow-400 rounded-lg p-4 mb-4">
-              <h4 className="font-bold text-yellow-800">DEBUG INFO:</h4>
-              <p>
-                Status:{" "}
-                <span className="font-mono">{currentBooking.status}</span>
-              </p>
-              <p>
-                User Role: <span className="font-mono">{userRole}</span>
-              </p>
-              <p>
-                Status Check:{" "}
-                <span className="font-mono">
-                  {currentBooking.status === "delivered_to_owner"
-                    ? "TRUE"
-                    : "FALSE"}
-                </span>
-              </p>
-              <p>
-                User Role Check:{" "}
-                <span className="font-mono">
-                  {userRole === "owner" ? "TRUE" : "FALSE"}
-                </span>
-              </p>
-              <p>
-                onComplete exists:{" "}
-                <span className="font-mono">
-                  {onComplete ? "TRUE" : "FALSE"}
-                </span>
-              </p>
-            </div>
 
             {/* Action Buttons */}
-            {userRole === "renter" && (
-              <>
-                {currentBooking.status === "payment_pending" && (
-                  <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
-                    <div className="flex justify-center">
-                      <button
-                        onClick={onMakePayment}
-                        disabled={paymentLoading}
-                        className={`px-8 py-3 rounded-xl primary-bg text-white font-bold text-lg hover-primary transform hover:scale-105 transition-all duration-200 shadow-lg ${
-                          paymentLoading
-                            ? "opacity-50 cursor-not-allowed transform-none"
-                            : ""
-                        }`}
-                      >
-                        {paymentLoading ? "Processing..." : "Pay Advance"}
-                      </button>
-                    </div>
+            {currentBooking.status === "advance_paid" && (
+              <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
+                <h4 className="text-xl font-bold text-primary mb-6">
+                  Set Pickup Details
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                  <div>
+                    <label className="block text-sm font-semibold text-primary mb-2">
+                      Pickup Time
+                    </label>
+                    <input
+                      type="datetime-local"
+                      className="w-full p-3 border-2 border-gray-200 rounded-lg focus-primary transition-all duration-200"
+                      value={pickupDetails.pickupTime}
+                      onChange={(e) =>
+                        setPickupDetails({
+                          ...pickupDetails,
+                          pickupTime: e.target.value,
+                        })
+                      }
+                    />
                   </div>
-                )}
-                {currentBooking.status === "ready_for_pickup" && (
-                  <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
-                    <div className="flex justify-center">
-                      <button
-                        onClick={onMarkPickedUp}
-                        disabled={actionLoading}
-                        className={`px-8 py-3 rounded-xl primary-bg text-white font-bold text-lg hover-primary transform hover:scale-105 transition-all duration-200 shadow-lg ${
-                          actionLoading
-                            ? "opacity-50 cursor-not-allowed transform-none"
-                            : ""
-                        }`}
-                      >
-                        {actionLoading ? "Processing..." : "Mark as Picked Up"}
-                      </button>
-                    </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-primary mb-2">
+                      Pickup Instructions
+                    </label>
+                    <input
+                      type="text"
+                      className="w-full p-3 border-2 border-gray-200 rounded-lg focus-primary transition-all duration-200"
+                      placeholder="Any special instructions"
+                      value={pickupDetails.pickupInstructions}
+                      onChange={(e) =>
+                        setPickupDetails({
+                          ...pickupDetails,
+                          pickupInstructions: e.target.value,
+                        })
+                      }
+                    />
                   </div>
-                )}
-                {currentBooking.status === "picked_and_payment_done" && (
-                  <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
-                    <div className="flex justify-center">
-                      <button
-                        onClick={onMarkDelivered}
-                        disabled={actionLoading}
-                        className={`px-8 py-3 rounded-xl primary-bg text-white font-bold text-lg hover-primary transform hover:scale-105 transition-all duration-200 shadow-lg ${
-                          actionLoading
-                            ? "opacity-50 cursor-not-allowed transform-none"
-                            : ""
-                        }`}
-                      >
-                        {actionLoading ? "Processing..." : "Mark as Delivered"}
-                      </button>
-                    </div>
-                  </div>
-                )}
-                {currentBooking.status === "completed" && (
-                  <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
-                    <div className="flex justify-center">
-                      <button
-                        onClick={onOpenReview}
-                        disabled={actionLoading}
-                        className={`px-8 py-3 rounded-xl primary-bg text-white font-bold text-lg hover-primary transform hover:scale-105 transition-all duration-200 shadow-lg ${
-                          actionLoading
-                            ? "opacity-50 cursor-not-allowed transform-none"
-                            : ""
-                        }`}
-                      >
-                        Leave a Review
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </>
+                </div>
+                <div className="flex justify-center">
+                  <button
+                    onClick={onSetPickupDetails}
+                    disabled={actionLoading}
+                    className="primary-bg hover-primary disabled:opacity-50 disabled:cursor-not-allowed text-white px-8 py-3 rounded-xl font-bold text-lg transform hover:scale-105 transition-all duration-200 shadow-lg"
+                  >
+                    {actionLoading ? "Processing..." : "Set Pickup Details"}
+                  </button>
+                </div>
+              </div>
             )}
-
-            {userRole === "owner" && (
-              <>
-                {currentBooking.status === "advance_paid" && (
-                  <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
-                    <h4 className="text-xl font-bold text-primary mb-6">
-                      Set Pickup Details
-                    </h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                      <div>
-                        <label className="block text-sm font-semibold text-primary mb-2">
-                          Pickup Time
-                        </label>
-                        <input
-                          type="datetime-local"
-                          className="w-full p-3 border-2 border-gray-200 rounded-lg focus-primary transition-all duration-200"
-                          value={pickupDetails.pickupTime}
-                          onChange={(e) =>
-                            setPickupDetails({
-                              ...pickupDetails,
-                              pickupTime: e.target.value,
-                            })
-                          }
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-semibold text-primary mb-2">
-                          Pickup Instructions
-                        </label>
-                        <input
-                          type="text"
-                          className="w-full p-3 border-2 border-gray-200 rounded-lg focus-primary transition-all duration-200"
-                          placeholder="Any special instructions"
-                          value={pickupDetails.pickupInstructions}
-                          onChange={(e) =>
-                            setPickupDetails({
-                              ...pickupDetails,
-                              pickupInstructions: e.target.value,
-                            })
-                          }
-                        />
-                      </div>
-                    </div>
-                    <div className="flex justify-center">
-                      <button
-                        onClick={onSetPickupDetails}
-                        disabled={actionLoading}
-                        className="primary-bg hover-primary disabled:opacity-50 disabled:cursor-not-allowed text-white px-8 py-3 rounded-xl font-bold text-lg transform hover:scale-105 transition-all duration-200 shadow-lg"
-                      >
-                        {actionLoading ? "Processing..." : "Set Pickup Details"}
-                      </button>
-                    </div>
-                  </div>
-                )}
-                {currentBooking.status === "picked_up" && (
-                  <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
-                    <div className="flex justify-center">
-                      <button
-                        onClick={onMarkPickedAndPaymentDone}
-                        disabled={actionLoading}
-                        className={`px-8 py-3 rounded-xl primary-bg text-white font-bold text-lg hover-primary transform hover:scale-105 transition-all duration-200 shadow-lg ${
-                          actionLoading
-                            ? "opacity-50 cursor-not-allowed transform-none"
-                            : ""
-                        }`}
-                      >
-                        {actionLoading
-                          ? "Processing..."
-                          : "Mark Picked & Payment Done"}
-                      </button>
-                    </div>
-                  </div>
-                )}
-                {currentBooking.status === "car_delivered" && (
-                  <div className="secondary-bg rounded-xl p-6 shadow-lg">
-                    <div className="flex justify-center">
-                      <button
-                        onClick={onComplete}
-                        disabled={actionLoading}
-                        className="bg-white text-primary hover:bg-gray-50 disabled:bg-gray-100 px-8 py-3 rounded-xl font-bold text-lg transform hover:scale-105 transition-all duration-200 shadow-lg border-2 border-white"
-                      >
-                        {actionLoading ? "Processing..." : "Complete Booking"}
-                      </button>
-                    </div>
-                  </div>
-                )}
-                {currentBooking.status === "delivered_to_owner" && (
-                  <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
-                    <div className="flex justify-center">
-                      <button
-                        onClick={onComplete}
-                        disabled={actionLoading}
-                        className={`px-8 py-3 rounded-xl primary-bg text-white font-bold text-lg hover-primary transform hover:scale-105 transition-all duration-200 shadow-lg ${
-                          actionLoading
-                            ? "opacity-50 cursor-not-allowed transform-none"
-                            : ""
-                        }`}
-                      >
-                        {actionLoading ? "Processing..." : "Complete Booking"}
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </>
+            {currentBooking.status === "picked_up" && (
+              <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
+                <div className="flex justify-center">
+                  <button
+                    onClick={onMarkPickedAndPaymentDone}
+                    disabled={actionLoading}
+                    className={`px-8 py-3 rounded-xl primary-bg text-white font-bold text-lg hover-primary transform hover:scale-105 transition-all duration-200 shadow-lg ${
+                      actionLoading
+                        ? "opacity-50 cursor-not-allowed transform-none"
+                        : ""
+                    }`}
+                  >
+                    {actionLoading
+                      ? "Processing..."
+                      : "Mark Picked & Payment Done"}
+                  </button>
+                </div>
+              </div>
+            )}
+            {currentBooking.status === "delivered_to_owner" && (
+              <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
+                <div className="flex justify-center">
+                  <button
+                    onClick={onComplete}
+                    disabled={actionLoading}
+                    className={`px-8 py-3 rounded-xl primary-bg text-white font-bold text-lg hover-primary transform hover:scale-105 transition-all duration-200 shadow-lg ${
+                      actionLoading
+                        ? "opacity-50 cursor-not-allowed transform-none"
+                        : ""
+                    }`}
+                  >
+                    {actionLoading ? "Processing..." : "Complete Booking"}
+                  </button>
+                </div>
+              </div>
             )}
           </div>
         </div>
@@ -623,4 +481,4 @@ function BookingDetailsModal({
   );
 }
 
-export default BookingDetailsModal;
+export default OwnerBookingDetailsModal;

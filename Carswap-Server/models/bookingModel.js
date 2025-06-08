@@ -166,6 +166,19 @@ class BookingModel {
       }
     );
   }
+  static async markReviewed(bookingId) {
+    const collection = await this.getCollection();
+    return collection.updateOne(
+      { _id: getObjectId(bookingId) },
+      {
+        $set: {
+          status: "reviewed",
+          updatedAt: new Date(),
+          reviewedAt: new Date(),
+        },
+      }
+    );
+  }
 
   static async getOwnerBookings(ownerEmail) {
     const collection = await this.getCollection();

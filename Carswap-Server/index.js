@@ -9,6 +9,8 @@ const verificationRoutes = require("./routes/verificationRoutes");
 // const adminRoutes = require('./routes/adminRoutes');
 const { connectToDatabase } = require("./config/db");
 const bookingRoutes = require("./routes/bookingRoutes");
+const bookingPaymentRoutes = require("./routes/bookingPaymentRoutes");
+const subscriptionPaymentRoutes = require("./routes/subscriptionPaymentRoutes");
 
 const app = express();
 const port = process.env.PORT || 9000;
@@ -24,16 +26,19 @@ app.use(express.json());
 
 // Connect to database
 connectToDatabase().catch(console.error);
-
+app.use((req, res, next) => {
+  console.log(`Incoming request: ${req.method} ${req.path}`);
+  next();
+});
 // Routes
 app.use("/users", userRoutes);
 app.use("/cars", carRoutes);
 
 app.use("/verifications", verificationRoutes);
-app.use("/booking", bookingRoutes)
-app.use("/payments", paymentRoutes)
-// app.use('/messages', messageRoutes);
-// app.use('/admin', adminRoutes);
+app.use("/booking", bookingRoutes);
+app.use("/payments", paymentRoutes);
+app.use('/booking-payments', bookingPaymentRoutes);
+app.use("/subscription-payments", subscriptionPaymentRoutes);
 
 // Home route
 app.get("/", (req, res) => {

@@ -78,8 +78,7 @@ const CarManagement = () => {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this car post?"))
-      return;
+   
 
     try {
       await axios.delete(`${api}/cars/${id}`);
@@ -92,8 +91,7 @@ const CarManagement = () => {
   };
 
   const handleApprove = async (id) => {
-    if (!window.confirm("Are you sure you want to approve this car post?"))
-      return;
+   
 
     try {
       await axios.put(`${api}/cars/approve/${id}`);

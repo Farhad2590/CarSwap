@@ -3,11 +3,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import toast from "react-hot-toast";
 import useAuth from "../../hooks/useAuth";
-import {
-  FaIdCard,
-  FaCar,
-  FaCheckCircle,
-} from "react-icons/fa";
+import { FaIdCard, FaCar, FaCheckCircle } from "react-icons/fa";
 
 const ProfileVerification = () => {
   const { user } = useAuth();
@@ -26,11 +22,9 @@ const ProfileVerification = () => {
     vehicleRegImage: null,
   });
 
-
   const licenseImageRef = useRef(null);
   const nidPhotoRef = useRef(null);
   const vehicleRegImageRef = useRef(null);
-
 
   useEffect(() => {
     const queryParams = new URLSearchParams(window.location.search);
@@ -38,7 +32,6 @@ const ProfileVerification = () => {
 
     if (status) {
       setVerificationStatus(status);
-
       navigate(window.location.pathname, { replace: true });
 
       if (status === "success") {

@@ -1,14 +1,10 @@
 const UserModel = require("../models/userModel");
-const PaymentModel = require("../models/paymentModel");
+const SubscriptionPaymentModel = require("../models/subscriptionPaymentModel");
 const axios = require("axios");
 require("dotenv").config();
 
-console.log("Store ID:", "carsw683bc46e1ae21");
-console.log("Store Pass:", "carsw683bc46e1ae21@ssl" ? "***" : "Not set");
-console.log("Frontend URL:", "http://localhost:5173");
-console.log("Backend URL:", "http://localhost:9000");
-
 const userController = {
+  // Basic CRUD operations
   getAllUsers: async (req, res) => {
     try {
       const result = await UserModel.getAllUsers();
@@ -22,13 +18,10 @@ const userController = {
     try {
       const email = req.params.email;
       const result = await UserModel.getUserByEmail(email);
-      if (result) {
-        res.status(200).json(result);
-      } else {
-        res.status(404).json({ message: "User not found" });
-      }
+      result
+        ? res.status(200).json(result)
+        : res.status(404).json({ message: "User not found" });
     } catch (error) {
-      console.error("Error fetching user:", error);
       res.status(500).json({ error: "Internal Server Error" });
     }
   },
@@ -57,71 +50,47 @@ const userController = {
     }
   },
 
-  updateUserRole: async (req, res) => {
-    try {
-      const userEmail = req.params.email;
-      const { role } = req.body;
-      const result = await UserModel.updateUserRole(userEmail, role);
-      res.send(result);
-    } catch (error) {
-      res.status(500).send({ error: error.message });
-    }
-  },
-
-  checkAdminStatus: async (req, res) => {
-    try {
-      const email = req.params.email;
-      const result = await UserModel.checkAdminStatus(email);
-      res.send(result);
-    } catch (error) {
-      res.status(500).send({ error: error.message });
-    }
-  },
-
-  checkOwnerStatus: async (req, res) => {
-    try {
-      const email = req.params.email;
-      const result = await UserModel.checkOwnerStatus(email);
-      res.send(result);
-    } catch (error) {
-      res.status(500).send({ error: error.message });
-    }
-  },
-
-  checkRenterStatus: async (req, res) => {
-    try {
-      const email = req.params.email;
-      const result = await UserModel.checkRenterStatus(email);
-      res.send(result);
-    } catch (error) {
-      res.status(500).send({ error: error.message });
-    }
-  },
-
   updateUserByEmail: async (req, res) => {
     try {
       const email = req.params.email;
       const updateData = req.body;
       const result = await UserModel.updateUserByEmail(email, updateData);
-      if (result.modifiedCount === 1) {
-        res
-          .status(200)
-          .json({ success: true, message: "User updated successfully" });
-      } else {
-        res.status(404).json({
-          success: false,
-          message: "User not found or no changes made",
-        });
-      }
+      result.modifiedCount === 1
+        ? res
+            .status(200)
+            .json({ success: true, message: "User updated successfully" })
+        : res.status(404).json({
+            success: false,
+            message: "User not found or no changes made",
+          });
     } catch (error) {
       res.status(500).send({ error: error.message });
     }
   },
 
+  // Role checking
+  checkAdminStatus: async (req, res) => {
+    await checkRole(req, res, "admin");
+  },
+
+  checkOwnerStatus: async (req, res) => {
+    await checkRole(req, res, "owner");
+  },
+
+  checkRenterStatus: async (req, res) => {
+    await checkRole(req, res, "renter");
+  },
+
+  // Verification related
   initiateVerification: async (req, res) => {
     try {
       const { email, verificationData } = req.body;
-
+      const requiredFields = [
+        "licenseNumber",
+        "nid",
+        "licenseImage",
+        "nidPhoto",
+      ];
 
       if (!email || !verificationData) {
         return res
@@ -129,24 +98,11 @@ const userController = {
           .json({ error: "Missing required verification data" });
       }
 
-
-      const { licenseNumber, nid, licenseImage, nidPhoto } = verificationData;
-      if (!licenseNumber || !nid || !licenseImage || !nidPhoto) {
+      if (requiredFields.some((field) => !verificationData[field])) {
         return res
           .status(400)
           .json({ error: "Missing required verification fields" });
       }
-
-
-      if (!"carsw683bc46e1ae21" || !"carsw683bc46e1ae21@ssl") {
-        console.error(
-          "SSLCommerz credentials not found in environment variables"
-        );
-        return res
-          .status(500)
-          .json({ error: "Payment gateway configuration error" });
-      }
-
 
       const updateResult = await UserModel.updateUserByEmail(email, {
         verificationData: {
@@ -160,32 +116,42 @@ const userController = {
         throw new Error("Failed to save verification data");
       }
 
-
       const transactionId =
-        "VERIFY_" +
-        Date.now() +
-        "_" +
-        email.replace("@", "_").replace(".", "_");
+        "VERIFY_" + Date.now() + "_" + email.replace(/[^a-zA-Z0-9]/g, "_");
 
+      // Use SubscriptionPaymentModel instead of PaymentModel
+      await SubscriptionPaymentModel.createPayment({
+        userEmail: email,
+        amount: 100,
+        purpose: "verification",
+        status: "initiated",
+        transactionId,
+        verificationData,
+      });
 
       const paymentData = new URLSearchParams({
-        store_id: "carsw683bc46e1ae21",
-        store_passwd: "carsw683bc46e1ae21@ssl",
+        store_id: process.env.SSLCOMMERZ_STORE_ID,
+        store_passwd: process.env.SSLCOMMERZ_STORE_PASSWORD,
         total_amount: "100.00",
         currency: "BDT",
         tran_id: transactionId,
+
         success_url: `${
-          process.env.FRONTEND_URL || "http://localhost:5173"
-        }/dashboard/profile`,
+          process.env.BACKEND_URL
+        }/users/verify-success?tran_id=${transactionId}&amount=100&email=${encodeURIComponent(
+          email
+        )}`,
         fail_url: `${
-          process.env.FRONTEND_URL || "http://localhost:5173"
-        }/dashboard/profile`,
+          process.env.BACKEND_URL
+        }/users/verify-failed?tran_id=${transactionId}&email=${encodeURIComponent(
+          email
+        )}`,
         cancel_url: `${
-          process.env.FRONTEND_URL || "http://localhost:5173"
-        }/dashboard/profile`,
-        ipn_url: `${
-          process.env.BACKEND_URL || "http://localhost:9000"
-        }/api/users/verify-ipn`,
+          process.env.BACKEND_URL
+        }/users/verify-cancelled?tran_id=${transactionId}&email=${encodeURIComponent(
+          email
+        )}`,
+        ipn_url: `${process.env.BACKEND_URL}/users/verify-ipn`,
         cus_name: verificationData.name || "Customer",
         cus_email: email,
         cus_phone: verificationData.phone || "01700000000",
@@ -198,24 +164,10 @@ const userController = {
         product_profile: "general",
       });
 
-      const paymentRecord = await PaymentModel.createPayment({
-        userEmail: email,
-        amount: 100,
-        purpose: "verification",
-        status: "initiated",
-        transactionId,
-        verificationData,
-      });
-
-
       const response = await axios.post(
         "https://sandbox.sslcommerz.com/gwprocess/v4/api.php",
         paymentData,
-        {
-          headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
-          },
-        }
+        { headers: { "Content-Type": "application/x-www-form-urlencoded" } }
       );
 
       if (response.data.status !== "SUCCESS") {
@@ -227,14 +179,10 @@ const userController = {
       res.json({
         success: true,
         paymentUrl: response.data.GatewayPageURL,
-        transactionId: transactionId,
+        transactionId,
       });
     } catch (error) {
-      console.error("Verification error:", error);
-      res.status(500).json({
-        error: error.message,
-        details: error.response?.data || "Unknown error occurred",
-      });
+      res.status(500).json({ error: error.message });
     }
   },
 
@@ -246,18 +194,102 @@ const userController = {
         return res.status(400).json({ error: "Invalid transaction status" });
       }
 
-      const parts = tran_id.split("_");
-      if (parts.length < 3) {
+      const email = extractEmailFromTransactionId(tran_id);
+      if (!email) {
         return res.status(400).json({ error: "Invalid transaction ID format" });
       }
 
-      const emailPart = parts.slice(2).join("_").replace("_", "@");
-      const email = emailPart.includes("@")
-        ? emailPart
-        : parts[2] + "@" + parts[3];
+      const verifyUrl = `https://sandbox.sslcommerz.com/validator/api/validationserverAPI.php?val_id=${val_id}&store_id=${process.env.SSLCOMMERZ_STORE_ID}&store_passwd=${process.env.SSLCOMMERZ_STORE_PASSWORD}&format=json`;
+      const verifyResponse = await axios.get(verifyUrl);
 
-      const verifyUrl = `https://sandbox.sslcommerz.com/validator/api/validationserverAPI.php?val_id=${val_id}&store_id=${"carsw683bc46e1ae21"}&store_passwd=${"carsw683bc46e1ae21@ssl"}&format=json`;
+      if (verifyResponse.data.status !== "VALID") {
+        return res.status(400).json({ error: "Payment verification failed" });
+      }
 
+      // Use SubscriptionPaymentModel instead of PaymentModel
+      await SubscriptionPaymentModel.updatePaymentStatusByTransactionId(
+        tran_id,
+        "completed",
+        val_id
+      );
+
+      await UserModel.updateUserByEmail(email, {
+        isSubscribed: true,
+        "verificationData.status": "pending",
+        "verificationData.paymentDate": new Date().toISOString(),
+        "verificationData.transactionId": tran_id,
+      });
+
+      await updateAdminBalance(email, tran_id, 100);
+
+      res
+        .status(200)
+        .json({ success: true, message: "IPN processed successfully" });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  },
+
+  handleVerificationCallback: async (req, res) => {
+    try {
+      const { tran_id, amount, email } = req.query;
+      // More robust status extraction
+      const pathParts = req.path.split("/");
+      const status = pathParts[pathParts.length - 1].split("-").pop();
+
+      if (!["success", "failed", "cancelled"].includes(status)) {
+        throw new Error("Invalid payment status");
+      }
+
+      const frontendUrl = process.env.FRONTEND_URL;
+
+      if (tran_id) {
+        await SubscriptionPaymentModel.updatePaymentStatusByTransactionId(
+          tran_id,
+          status
+        );
+      }
+
+      if (status === "success") {
+        await updateAdminBalance(email, tran_id, amount);
+        await UserModel.updateUserByEmail(email, {
+          isSubscribed: true,
+          "verificationData.paymentDate": new Date().toISOString(),
+          "verificationData.transactionId": tran_id,
+        });
+      }
+
+      res.redirect(
+        `${frontendUrl}/payment-result?payment=${status}&email=${encodeURIComponent(
+          email
+        )}&tran_id=${tran_id || ""}&amount=${amount || ""}`
+      );
+    } catch (error) {
+      console.error("Callback error:", error);
+      res.redirect(
+        `${
+          process.env.FRONTEND_URL
+        }/payment-result?payment=error&error=${encodeURIComponent(
+          error.message
+        )}`
+      );
+    }
+  },
+
+  handleVerificationIPN: async (req, res) => {
+    try {
+      const { tran_id, status, val_id } = req.body;
+
+      if (status !== "VALID") {
+        return res.status(400).json({ error: "Invalid transaction status" });
+      }
+
+      const email = extractEmailFromTransactionId(tran_id);
+      if (!email) {
+        return res.status(400).json({ error: "Invalid transaction ID format" });
+      }
+
+      const verifyUrl = `https://sandbox.sslcommerz.com/validator/api/validationserverAPI.php?val_id=${val_id}&store_id=${process.env.SSLCOMMERZ_STORE_ID}&store_passwd=${process.env.SSLCOMMERZ_STORE_PASSWORD}&format=json`;
       const verifyResponse = await axios.get(verifyUrl);
 
       if (verifyResponse.data.status !== "VALID") {
@@ -277,9 +309,12 @@ const userController = {
         "verificationData.transactionId": tran_id,
       });
 
-      res.json({ success: true });
+      await updateAdminBalance(email, tran_id, 100);
+
+      res
+        .status(200)
+        .json({ success: true, message: "IPN processed successfully" });
     } catch (error) {
-      console.error("IPN handling error:", error);
       res.status(500).json({ error: error.message });
     }
   },
@@ -296,11 +331,9 @@ const userController = {
         isSubscribed: true,
       });
 
-      if (result.modifiedCount === 1) {
-        res.json({ success: true, message: "Verification approved" });
-      } else {
-        res.status(404).json({ success: false, message: "User not found" });
-      }
+      result.modifiedCount === 1
+        ? res.json({ success: true, message: "Verification approved" })
+        : res.status(404).json({ success: false, message: "User not found" });
     } catch (error) {
       res.status(500).json({ error: error.message });
     }
@@ -317,11 +350,9 @@ const userController = {
         adminNotes,
       });
 
-      if (result.modifiedCount === 1) {
-        res.json({ success: true, message: "Verification rejected" });
-      } else {
-        res.status(404).json({ success: false, message: "User not found" });
-      }
+      result.modifiedCount === 1
+        ? res.json({ success: true, message: "Verification rejected" })
+        : res.status(404).json({ success: false, message: "User not found" });
     } catch (error) {
       res.status(500).json({ error: error.message });
     }
@@ -335,6 +366,88 @@ const userController = {
       res.status(500).json({ error: error.message });
     }
   },
+
+  // Balance operations
+  updateUserBalance: async (req, res) => {
+    try {
+      const { email } = req.params;
+      const { amount, type, description } = req.body;
+
+      const result = await UserModel.updateUserBalance(
+        email,
+        amount,
+        type,
+        description
+      );
+      res.json({
+        success: true,
+        newBalance: result.balance,
+        transaction: result.transaction,
+      });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  },
+
+  getUserBalance: async (req, res) => {
+    try {
+      const { email } = req.params;
+      const user = await UserModel.getUserByEmail(email);
+      res.json({
+        success: true,
+        balance: user.balance || 0,
+        transactions: user.transactions || [],
+      });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  },
+
+  updateAdminBalance: async (req, res) => {
+    try {
+      const { amount, transactionId, userEmail } = req.body;
+      const result = await UserModel.updateUserBalance(
+        "carswap@gmail.com",
+        amount,
+        "credit",
+        `Payment from ${
+          userEmail || "unknown user"
+        } (Transaction: ${transactionId})`
+      );
+      res.json({ success: true, newBalance: result.balance });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  },
 };
+
+// Helper functions
+async function checkRole(req, res, role) {
+  try {
+    const email = req.params.email;
+    const result = await UserModel.checkRoleStatus(email, role);
+    res.send(result);
+  } catch (error) {
+    res.status(500).send({ error: error.message });
+  }
+}
+
+function extractEmailFromTransactionId(tran_id) {
+  const parts = tran_id.split("_");
+  if (parts.length >= 4) {
+    return parts[2] + "@" + parts[3];
+  }
+  const emailPart = parts.slice(2).join("_");
+  return emailPart.replace("_", "@");
+}
+
+async function updateAdminBalance(userEmail, transactionId, amount) {
+  await UserModel.updateUserBalance(
+    "carswap@gmail.com",
+    amount,
+    "credit",
+    `Verification fee from ${userEmail} (Transaction: ${transactionId})`
+  );
+}
 
 module.exports = userController;

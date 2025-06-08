@@ -1,11 +1,11 @@
-const CarModel = require('../models/carModel');
-const UserModel = require('../models/userModel');
+const CarModel = require("../models/carModel");
+const UserModel = require("../models/userModel");
 
 const carController = {
   createCarPost: async (req, res) => {
     try {
       const carData = req.body;
-      carData.status = 'pending'; 
+      carData.status = "pending";
       carData.createdAt = new Date().toISOString();
       carData.updatedAt = new Date().toISOString();
       carData.ratings = [];
@@ -20,40 +20,48 @@ const carController = {
     try {
       const { status } = req.query;
       const filter = status ? { status } : {};
-      
-    
+
       const carPosts = await CarModel.getAllCarPosts(filter);
-      
-    
+
       const carPostsWithVerification = await Promise.all(
         carPosts.map(async (car) => {
           try {
             const user = await UserModel.getUserByEmail(car.userEmail);
-            const verificationStatus = user?.verificationData?.status === 'approved' ? 'verified' : 'unverified';
+            const verificationStatus =
+              user?.verificationData?.status === "approved"
+                ? "verified"
+                : "unverified";
             return {
               ...car,
-              verificationStatus
+              verificationStatus,
             };
           } catch (error) {
-            console.error(`Error getting user verification for ${car.userEmail}:`, error);
+            console.error(
+              `Error getting user verification for ${car.userEmail}:`,
+              error
+            );
             return {
               ...car,
-              verificationStatus: 'unverified'
+              verificationStatus: "unverified",
             };
           }
         })
       );
 
-     
       const sortedCarPosts = carPostsWithVerification.sort((a, b) => {
-     
-        if (a.verificationStatus === 'verified' && b.verificationStatus === 'unverified') {
+        if (
+          a.verificationStatus === "verified" &&
+          b.verificationStatus === "unverified"
+        ) {
           return -1;
         }
-        if (a.verificationStatus === 'unverified' && b.verificationStatus === 'verified') {
+        if (
+          a.verificationStatus === "unverified" &&
+          b.verificationStatus === "verified"
+        ) {
           return 1;
         }
-       
+
         return new Date(b.createdAt) - new Date(a.createdAt);
       });
 
@@ -68,17 +76,19 @@ const carController = {
       const { id } = req.params;
       const result = await CarModel.getCarPostById(id);
       if (result) {
-       
         try {
           const user = await UserModel.getUserByEmail(result.userEmail);
-          const verificationStatus = user?.verificationData?.status === 'approved' ? 'verified' : 'unverified';
+          const verificationStatus =
+            user?.verificationData?.status === "approved"
+              ? "verified"
+              : "unverified";
           result.verificationStatus = verificationStatus;
         } catch (error) {
-          result.verificationStatus = 'unverified';
+          result.verificationStatus = "unverified";
         }
         res.json(result);
       } else {
-        res.status(404).json({ message: 'Car post not found' });
+        res.status(404).json({ message: "Car post not found" });
       }
     } catch (error) {
       res.status(500).json({ error: error.message });
@@ -111,32 +121,31 @@ const carController = {
     try {
       const { ownerEmail } = req.params;
       const { status } = req.query;
-      
-    
+
       const filter = { userEmail: ownerEmail };
       if (status) {
         filter.status = status;
       }
-      
+
       const result = await CarModel.getCarsByOwner(filter);
-      
-      
+
       try {
         const user = await UserModel.getUserByEmail(ownerEmail);
-        const verificationStatus = user?.verificationData?.status === 'approved' ? 'verified' : 'unverified';
-        
-       
-        const carsWithVerification = result.map(car => ({
+        const verificationStatus =
+          user?.verificationData?.status === "approved"
+            ? "verified"
+            : "unverified";
+
+        const carsWithVerification = result.map((car) => ({
           ...car,
-          verificationStatus
+          verificationStatus,
         }));
-        
+
         res.json(carsWithVerification);
       } catch (error) {
-       
-        const carsWithVerification = result.map(car => ({
+        const carsWithVerification = result.map((car) => ({
           ...car,
-          verificationStatus: 'unverified'
+          verificationStatus: "unverified",
         }));
         res.json(carsWithVerification);
       }
@@ -151,7 +160,7 @@ const carController = {
       const updateData = {
         status: "approved",
         approvedAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
       };
       const result = await CarModel.updateCarPost(id, updateData);
       res.json(result);
@@ -168,7 +177,7 @@ const carController = {
         status: "rejected",
         rejectedAt: new Date().toISOString(),
         rejectionReason: rejectionReason || "Not specified",
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
       };
       const result = await CarModel.updateCarPost(id, updateData);
       res.json(result);
@@ -193,7 +202,7 @@ const carController = {
       const { id } = req.params;
       const bidData = req.body;
       bidData.createdAt = new Date().toISOString();
-      bidData.status = 'pending';
+      bidData.status = "pending";
       const result = await CarModel.placeBid(id, bidData);
       res.status(201).json(result);
     } catch (error) {
@@ -221,27 +230,58 @@ const carController = {
     }
   },
 
-  
   getUserVerificationStatus: async (req, res) => {
     try {
       const { email } = req.params;
       const user = await UserModel.getUserByEmail(email);
-      
+
       if (!user) {
-        return res.status(404).json({ message: 'User not found' });
+        return res.status(404).json({ message: "User not found" });
       }
 
       const verificationStatus = {
-        isVerified: user.verificationData?.status === 'approved',
-        status: user.verificationData?.status || 'not_submitted',
-        verificationData: user.verificationData || null
+        isVerified: user.verificationData?.status === "approved",
+        status: user.verificationData?.status || "not_submitted",
+        verificationData: user.verificationData || null,
       };
 
       res.json(verificationStatus);
     } catch (error) {
       res.status(500).json({ error: error.message });
     }
-  }
+  },
+  // Add to carController.js
+  addCarReview: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const reviewData = req.body;
+      reviewData.createdAt = new Date().toISOString();
+
+      const collection = await CarModel.getCollection();
+      const result = await collection.updateOne(
+        { _id: getObjectId(id) },
+        { $push: { reviews: reviewData } }
+      );
+
+      res.status(201).json(result);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  },
+
+  getCarReviews: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const collection = await CarModel.getCollection();
+      const car = await collection.findOne(
+        { _id: getObjectId(id) },
+        { projection: { reviews: 1 } }
+      );
+      res.json(car?.reviews || []);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  },
 };
 
 module.exports = carController;

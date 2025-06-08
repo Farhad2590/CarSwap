@@ -23,6 +23,9 @@ router.get("/:bookingId/payment-cancelled", bookingController.handlePaymentCance
 router.post("/:bookingId/payment-cancelled", bookingController.handlePaymentCancelled);
 
 router.post("/:bookingId/payment-ipn", bookingController.handlePaymentIPN);
+// router.put('/:bookingId/review', bookingController.markReviewed);
+router.put("/:id/review", bookingController.markAsReviewed);
+
 
 // Booking status update routes
 router.put("/:bookingId/pickup-details", bookingController.setPickupDetails);

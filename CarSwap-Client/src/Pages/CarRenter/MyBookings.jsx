@@ -4,6 +4,7 @@ import { Eye, Clock, CheckCircle, Car, Truck, X } from "lucide-react";
 import useAuth from "../../hooks/useAuth";
 import { toast } from "react-toastify";
 import BookingDetailsModal from "../Shared/BookingDetailsModal";
+import RenterBookingDetailsModal from "../Shared/RenterBookingDetailsModal";
 
 const colors = {
   primary: "#0d786d",
@@ -85,6 +86,13 @@ const MyBookings = () => {
   const [ownerDetails, setOwnerDetails] = useState(null);
   const [paymentLoading, setPaymentLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
+  const [reviewModalVisible, setReviewModalVisible] = useState(false);
+  const [reviewData, setReviewData] = useState({
+    rating: 5,
+    comment: "",
+  });
+
+  // Add this handler function
 
   const { user } = useAuth();
   // const navigate = useNavigate();
@@ -153,7 +161,6 @@ const MyBookings = () => {
       );
 
       if (response.data.success && response.data.paymentUrl) {
-        // Open payment URL in a new tab
         window.location.href = response.data.paymentUrl;
       } else {
         throw new Error("Payment URL not received");
@@ -189,40 +196,24 @@ const MyBookings = () => {
     }
   };
 
-  // const handleMakePayment = async () => {
-  //   setPaymentLoading(true);
-  //   try {
-  //     const response = await axios.post(
-  //       `http://localhost:9000/booking/${currentBooking._id}/payment`,
-  //       {
-  //         amount: currentBooking.advanceAmount,
-  //         email: user?.email,
-  //       }
-  //     );
-
-  //     if (response.data.success && response.data.paymentUrl) {
-  //       // Open payment URL in the same window
-  //       window.location.href = response.data.paymentUrl;
-  //     } else {
-  //       throw new Error("Payment URL not received");
-  //     }
-  //   } catch (error) {
-  //     console.error("Failed to initiate payment:", error);
-  //     toast.error(
-  //       error.response?.data?.error ||
-  //         "Failed to initiate payment. Please try again."
-  //     );
-  //   } finally {
-  //     setPaymentLoading(false);
-  //   }
-  // };
-
   const handleMarkPickedUp = async () => {
     setActionLoading(true);
     try {
+      // First record the cash payment
+      console.log("Hello");
+
+      // await axios.post(
+      //   `http://localhost:9000/booking-payments/${currentBooking._id}/cash`,
+      //   {
+      //     amount: currentBooking.estimatedTotal * 0.5, // 50% of total
+      //   }
+      // );
+
+      // Then mark as picked up
       await axios.put(
         `http://localhost:9000/booking/${currentBooking._id}/picked-up`
       );
+
       setBookings(
         bookings.map((booking) =>
           booking._id === currentBooking._id
@@ -234,8 +225,10 @@ const MyBookings = () => {
         ...currentBooking,
         status: "picked_up",
       });
-      toast.success("Marked as picked up!");
+      toast.success("Marked as picked up and cash payment recorded!");
     } catch (error) {
+      console.log(error);
+
       toast.error("Failed to mark as picked up");
     } finally {
       setActionLoading(false);
@@ -262,6 +255,53 @@ const MyBookings = () => {
       toast.success("Car marked as delivered to owner");
     } catch (error) {
       toast.error("Failed to mark as delivered");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleOpenReviewModal = () => {
+    setReviewModalVisible(true);
+  };
+
+  const handleReviewSubmit = async () => {
+    setActionLoading(true);
+    try {
+      // First, submit the review to the car
+      await axios.post(
+        `http://localhost:9000/cars/${currentBooking.carId}/reviews`,
+        {
+          rating: reviewData.rating,
+          comment: reviewData.comment,
+          reviewerEmail: user?.email,
+          reviewerName: user?.name,
+          bookingId: currentBooking._id,
+          createdAt: new Date().toISOString(),
+        }
+      );
+
+      // Then update the booking status to "reviewed"
+      await axios.put(
+        `http://localhost:9000/booking/${currentBooking._id}/review`
+      );
+
+      // Update local state
+      setBookings(
+        bookings.map((booking) =>
+          booking._id === currentBooking._id
+            ? { ...booking, status: "reviewed" }
+            : booking
+        )
+      );
+      setCurrentBooking({
+        ...currentBooking,
+        status: "reviewed",
+      });
+      setReviewModalVisible(false);
+      toast.success("Review submitted successfully!");
+    } catch (error) {
+      console.error("Failed to submit review:", error);
+      toast.error("Failed to submit review. Please try again.");
     } finally {
       setActionLoading(false);
     }
@@ -409,15 +449,100 @@ const MyBookings = () => {
         )}
       </div>
 
-      <BookingDetailsModal
+      {reviewModalVisible && (
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h3
+                className="text-xl font-bold"
+                style={{ color: colors.primary }}
+              >
+                Leave a Review
+              </h3>
+              <button
+                onClick={() => setReviewModalVisible(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+
+            <div className="mb-4">
+              <label
+                className="block mb-2 font-medium"
+                style={{ color: colors.text }}
+              >
+                Rating
+              </label>
+              <select
+                className="w-full p-2 border rounded focus:outline-none focus:ring-2"
+                style={{
+                  borderColor: colors.primary + "50",
+                  focusRingColor: colors.primary,
+                }}
+                value={reviewData.rating}
+                onChange={(e) =>
+                  setReviewData({
+                    ...reviewData,
+                    rating: parseInt(e.target.value),
+                  })
+                }
+              >
+                {[5, 4, 3, 2, 1].map((num) => (
+                  <option key={num} value={num}>
+                    {num} Star{num !== 1 ? "s" : ""}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="mb-6">
+              <label
+                className="block mb-2 font-medium"
+                style={{ color: colors.text }}
+              >
+                Your Review
+              </label>
+              <textarea
+                className="w-full p-3 border rounded focus:outline-none focus:ring-2"
+                style={{
+                  borderColor: colors.primary + "50",
+                  focusRingColor: colors.primary,
+                  minHeight: "120px",
+                }}
+                placeholder="Share your experience with this car..."
+                value={reviewData.comment}
+                onChange={(e) =>
+                  setReviewData({ ...reviewData, comment: e.target.value })
+                }
+              />
+            </div>
+
+            <button
+              onClick={handleReviewSubmit}
+              disabled={actionLoading}
+              className={`w-full py-3 rounded-xl font-bold text-lg transition-all duration-200 ${
+                actionLoading
+                  ? "bg-gray-300 cursor-not-allowed"
+                  : "bg-primary hover:bg-dark text-white"
+              }`}
+            >
+              {actionLoading ? "Submitting..." : "Submit Review"}
+            </button>
+          </div>
+        </div>
+      )}
+
+      <RenterBookingDetailsModal
         visible={modalVisible}
         onClose={() => setModalVisible(false)}
         carDetails={carDetails}
         partyDetails={ownerDetails}
         currentBooking={currentBooking}
-        userRole="renter"
+        // userRole="renter"
         onMakePayment={handleMakePayment}
         onMarkPickedUp={handleMarkPickedUp}
+        onOpenReview={handleOpenReviewModal}
         onMarkDelivered={handleMarkDelivered}
         paymentLoading={paymentLoading}
         actionLoading={actionLoading}

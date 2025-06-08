@@ -21,6 +21,7 @@ import CarDetails from "../Pages/Shared/CarDetails";
 import MyBookings from "../Pages/CarRenter/MyBookings";
 import RequestedBookings from "../Pages/CarOwner/RequestedBookings";
 import PaymentResult from "../Pages/Shared/PaymentResult";
+import Transactions from "../Pages/Admin/Transactions";
 
 export const router = createBrowserRouter([
   {
@@ -87,6 +88,10 @@ export const router = createBrowserRouter([
       {
         path: "/dashboard/manage-cars",
         element: <CarManagement />,
+      },
+      {
+        path: "/dashboard/transactions",
+        element: <Transactions />,
       },
 
       //CarOwner

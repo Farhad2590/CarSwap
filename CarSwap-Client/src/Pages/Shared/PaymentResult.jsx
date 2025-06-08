@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { CheckCircle, XCircle, AlertCircle, ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
 const PaymentResult = () => {
   const [countdown, setCountdown] = useState(5);
@@ -12,15 +13,49 @@ const PaymentResult = () => {
   const tranId = urlParams.get("tran_id");
   const amount = urlParams.get("amount");
   const bookingId = urlParams.get("booking_id");
+  const email = urlParams.get("email");
   const error = urlParams.get("error");
 
+  if (!payment) {
+    console.warn("Missing payment status parameter in URL", {
+      payment,
+      tranId,
+      amount,
+      bookingId,
+      email,
+      error,
+    });
+  }
+
   useEffect(() => {
-    // Auto redirect to bookings after 5 seconds
+    // Update admin balance if payment is successful
+    // const updateAdminBalance = async () => {
+    //   if (payment === "success" && amount) {
+    //     try {
+    //       await axios.post("http://localhost:9000/users/update-admin-balance", {
+    //         amount: parseFloat(amount),
+    //         transactionId: tranId,
+    //         userEmail: email,
+    //       });
+    //       console.log("Admin balance updated successfully");
+    //     } catch (err) {
+    //       console.error("Failed to update admin balance:", err);
+    //     }
+    //   }
+    // };
+
+    // updateAdminBalance();
+
+    // Auto redirect to appropriate page after 5 seconds
     const timer = setInterval(() => {
       setCountdown((prev) => {
         if (prev <= 1) {
           clearInterval(timer);
-          navigate("/dashboard/my-bookings");
+          if (email) {
+            navigate("/dashboard/profile");
+          } else {
+            navigate("/dashboard/my-bookings");
+          }
           return 0;
         }
         return prev - 1;
@@ -28,7 +63,7 @@ const PaymentResult = () => {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [navigate]);
+  }, [navigate, payment, amount, tranId, email]);
 
   const getResultConfig = () => {
     switch (payment) {
@@ -36,7 +71,9 @@ const PaymentResult = () => {
         return {
           icon: <CheckCircle className="h-16 w-16 text-green-500" />,
           title: "Payment Successful!",
-          message: "Your advance payment has been processed successfully.",
+          message: email
+            ? "Your verification payment has been processed successfully."
+            : "Your advance payment has been processed successfully.",
           bgColor: "bg-green-50",
           borderColor: "border-green-200",
           textColor: "text-green-800",
@@ -47,6 +84,8 @@ const PaymentResult = () => {
           title: "Payment Failed",
           message: error
             ? `Error: ${decodeURIComponent(error)}`
+            : email
+            ? "Your verification payment could not be processed. Please try again."
             : "Your payment could not be processed. Please try again.",
           bgColor: "bg-red-50",
           borderColor: "border-red-200",
@@ -56,7 +95,9 @@ const PaymentResult = () => {
         return {
           icon: <AlertCircle className="h-16 w-16 text-yellow-500" />,
           title: "Payment Cancelled",
-          message: "You cancelled the payment process.",
+          message: email
+            ? "You cancelled the verification payment process."
+            : "You cancelled the payment process.",
           bgColor: "bg-yellow-50",
           borderColor: "border-yellow-200",
           textColor: "text-yellow-800",
@@ -75,6 +116,9 @@ const PaymentResult = () => {
 
   const config = getResultConfig();
 
+  const redirectPath = email ? "/dashboard/profile" : "/dashboard/my-bookings";
+  const redirectText = email ? "Go to Profile" : "Go to My Bookings";
+
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center px-4">
       <div className="max-w-md w-full">
@@ -86,7 +130,7 @@ const PaymentResult = () => {
           <h1 className="text-2xl font-bold mb-4">{config.title}</h1>
           <p className="text-sm mb-6">{config.message}</p>
 
-          {(tranId || amount || bookingId) && (
+          {(tranId || amount || bookingId || email) && (
             <div className="bg-white rounded-lg p-4 mb-6 text-left">
               <div className="space-y-2 text-sm">
                 {tranId && (
@@ -107,17 +151,23 @@ const PaymentResult = () => {
                     <span className="text-gray-600 break-all">{bookingId}</span>
                   </div>
                 )}
+                {email && (
+                  <div className="flex justify-between">
+                    <span className="font-medium">User Email:</span>
+                    <span className="text-gray-600 break-all">{email}</span>
+                  </div>
+                )}
               </div>
             </div>
           )}
 
           <div className="space-y-3">
             <button
-              onClick={() => navigate("/dashboard/my-bookings")}
+              onClick={() => navigate(redirectPath)}
               className="w-full bg-teal-600 hover:bg-teal-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
             >
               <ArrowLeft className="h-4 w-4" />
-              Go to My Bookings
+              {redirectText}
             </button>
 
             <p className="text-xs text-gray-500">

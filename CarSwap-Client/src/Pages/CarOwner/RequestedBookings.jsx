@@ -4,6 +4,7 @@ import { Eye, Check, X, Clock, CheckCircle, Car, Truck } from "lucide-react";
 import useAuth from "../../hooks/useAuth";
 import { toast } from "react-toastify";
 import BookingDetailsModal from "../Shared/BookingDetailsModal";
+import RenterBookingDetailsModal from "../Shared/RenterBookingDetailsModal";
 
 const colors = {
   primary: "#0d786d",
@@ -222,6 +223,31 @@ const RequestedBookings = () => {
       toast.success("Marked as Picked and Payment Done");
     } catch (error) {
       toast.error("Failed to mark picked and payment done");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleMarkDelivered = async () => {
+    setActionLoading(true);
+    try {
+      await axios.put(
+        `http://localhost:9000/booking/${currentBooking._id}/mark-delivered`
+      );
+      setBookings(
+        bookings.map((booking) =>
+          booking._id === currentBooking._id
+            ? { ...booking, status: "delivered_to_owner" }
+            : booking
+        )
+      );
+      setCurrentBooking({
+        ...currentBooking,
+        status: "delivered_to_owner",
+      });
+      toast.success("Car marked as delivered to owner");
+    } catch (error) {
+      toast.error("Failed to mark as delivered");
     } finally {
       setActionLoading(false);
     }
@@ -447,19 +473,20 @@ const RequestedBookings = () => {
           </div>
         )}
       </div>
-      <BookingDetailsModal
+      <RenterBookingDetailsModal
         visible={modalVisible}
         onClose={() => setModalVisible(false)}
         carDetails={carDetails}
         partyDetails={renterDetails}
         currentBooking={currentBooking}
-        userRole="owner"
+        // userRole="owner"
         onSetPickupDetails={handleSetPickupDetails}
         onMarkPickedAndPaymentDone={handleMarkPickedAndPaymentDone}
         onComplete={handleCompleteBooking}
         pickupDetails={pickupDetails}
         setPickupDetails={setPickupDetails}
         actionLoading={actionLoading}
+        
       />
     </div>
   );

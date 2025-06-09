@@ -22,6 +22,12 @@ import MyBookings from "../Pages/CarRenter/MyBookings";
 import RequestedBookings from "../Pages/CarOwner/RequestedBookings";
 import PaymentResult from "../Pages/Shared/PaymentResult";
 import Transactions from "../Pages/Admin/Transactions";
+import ReviewsGiven from "../Pages/CarRenter/ReviewsGiven";
+import CarReviews from "../Pages/CarOwner/CarReviews";
+import AllReviews from "../Pages/Admin/AllReviews";
+import PaymentHistory from "../Pages/CarRenter/PaymentHistory";
+import BalanceandWithdrawal from "../Pages/CarOwner/BalanceandWithdrawal";
+import Earings from "../Pages/CarOwner/Earings";
 
 export const router = createBrowserRouter([
   {
@@ -73,7 +79,7 @@ export const router = createBrowserRouter([
       },
       {
         path: "/dashboard/browse-cars",
-        element: <BrowseCars />,
+        element: <BowseCars />,
       },
       //Admin
       {
@@ -93,6 +99,14 @@ export const router = createBrowserRouter([
         path: "/dashboard/transactions",
         element: <Transactions />,
       },
+      {
+        path: "/dashboard/allReviews",
+        element: <AllReviews />,
+      },
+      // {
+      //   path: "/dashboard/earnings",
+      //   element: <Earings />,
+      // },
 
       //CarOwner
       {
@@ -107,11 +121,31 @@ export const router = createBrowserRouter([
         path: "/dashboard/booking-requests",
         element: <RequestedBookings />,
       },
+      {
+        path: "/dashboard/given-reviews",
+        element: <CarReviews />,
+      },
+      {
+        path: "/dashboard/earnings",
+        element: <Earings />,
+      },
 
       //CarRenter
       {
         path: "/dashboard/my-bookings",
         element: <MyBookings />,
+      },
+      {
+        path: "/dashboard/my-reviews",
+        element: <ReviewsGiven />,
+      },
+      {
+        path: "/dashboard/payment-history",
+        element: <PaymentHistory />,
+      },
+      {
+        path: "/dashboard/balanceWithdrawal",
+        element: <BalanceandWithdrawal />,
       },
     ],
   },

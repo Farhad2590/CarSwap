@@ -24,7 +24,7 @@ router.post("/:bookingId/payment-cancelled", bookingController.handlePaymentCanc
 
 router.post("/:bookingId/payment-ipn", bookingController.handlePaymentIPN);
 // router.put('/:bookingId/review', bookingController.markReviewed);
-router.put("/:id/review", bookingController.markAsReviewed);
+router.put("/:bookingId/review", bookingController.markAsReviewed);
 
 
 // Booking status update routes

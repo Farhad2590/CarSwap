@@ -31,5 +31,8 @@ router.get(
 // Add to carRoutes.js
 router.post("/:id/reviews", carController.addCarReview);
 router.get("/:id/reviews", carController.getCarReviews);
+router.get("/reviews/reviewer/:reviewerEmail", carController.getReviewsByReviewer);
+router.get("/reviews/owner/:ownerEmail", carController.getReviewsForOwner);
+router.get("/reviews/admin/all", carController.getAllReviews);
 
 module.exports = router;

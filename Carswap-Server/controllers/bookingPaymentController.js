@@ -51,8 +51,11 @@ const bookingPaymentController = {
         return res.status(404).json({ error: "Booking not found" });
       }
 
-      const payment = await BookingPaymentModel.recordCashPayment(bookingId, amount);
-      
+      const payment = await BookingPaymentModel.recordCashPayment(
+        bookingId,
+        amount
+      );
+
       res.json({
         success: true,
         payment,
@@ -65,7 +68,9 @@ const bookingPaymentController = {
   getBookingPayments: async (req, res) => {
     try {
       const { bookingId } = req.params;
-      const payments = await BookingPaymentModel.getPaymentsByBooking(bookingId);
+      const payments = await BookingPaymentModel.getPaymentsByBooking(
+        bookingId
+      );
       res.json({ payments });
     } catch (error) {
       res.status(500).json({ error: error.message });
@@ -89,7 +94,16 @@ const bookingPaymentController = {
     } catch (error) {
       res.status(500).json({ error: error.message });
     }
-  }
+  },
+  getPaymentsByUser: async (req, res) => {
+    try {
+      const { email } = req.params;
+      const payments = await BookingPaymentModel.getPaymentsByUser(email);
+      res.json({ payments });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  },
 };
 
 module.exports = bookingPaymentController;

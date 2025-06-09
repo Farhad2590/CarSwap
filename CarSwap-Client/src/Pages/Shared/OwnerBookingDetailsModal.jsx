@@ -82,6 +82,7 @@ function OwnerBookingDetailsModal({
   currentBooking,
   onSetPickupDetails,
   onMarkPickedAndPaymentDone,
+  onMarkDelivered,
   pickupDetails,
   setPickupDetails,
   actionLoading,

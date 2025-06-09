@@ -1,45 +1,69 @@
-{
-  "_id": {
-    "$oid": "6768176c03c17a96180381d6"
+[
+  {
+    "_id": "68178476150c666109d69576",
+    "email": "carswap@gmail.com",
+    "name": "Farhad Hossen",
+    "phone": "01829313336",
+    "photo": "https://i.ibb.co/Y4p7NmrC/image-2025-04-02-T18-17-20-722-Z.png",
+    "userType": "admin",
+    "isSubscribed": false,
+    "verificationStatus": "unverified",
+    "createdAt": "2025-05-04T15:15:02.190Z",
+    "balance": 0,
+    "transactions": [
+      
+    ]
   },
-  "transactionId": "pi_3QYpQgCDA6WzUssx1tvV2c7V",
-  "amount": "262.00",
-  "address": "Chittagong ,Agrabad",
-  "deliveryCharge": {
-    "$numberInt": "100"
-  },
-  "orderDate": "2024-12-22T13:42:44.461Z",
-  "products": [
-    {
-      "productId": "6768171303c17a96180381d4",
-      "productImage": "https://i.ibb.co.com/ngWBSH1/Product19.jpg",
-      "productName": "Magnifying Glass",
-      "totalPrice": {
-        "$numberInt": "12"
-      },
-      "unitPrice": {
-        "$numberInt": "12"
-      },
-      "quantity": {
-        "$numberInt": "1"
-      }
+  {
+    "_id": "6845670af51e55529a2c6b8b",
+    "email": "farhadhossen2590@gmail.com",
+    "name": "Farhad Hossen",
+    "phone": "01829313336",
+    "photo": "https://i.ibb.co/MxK29QR4/young.png",
+    "userType": "owner",
+    "verificationStatus": "Verified",
+    "createdAt": "2025-06-08T10:33:46.403Z",
+    "verificationData": {
+      "licenseNumber": "92020202200202",
+      "nid": "6914755324",
+      "additionalNotes": "Complete your account verification to access all features. A one-time verification fee of ৳100 is required.",
+      "licenseImage": "https://i.ibb.co/VYvqWn1v/license.jpg",
+      "nidPhoto": "https://i.ibb.co/k2gsDkXx/nid.png",
+      "status": "verified",
+      "submittedAt": "2025-06-08T10:34:20.411Z",
+      "paymentDate": "2025-06-08T10:34:29.695Z",
+      "transactionId": "VERIFY_1749378860495_farhadhossen2590_gmail_com"
     },
-    {
-      "productId": "6768171c03c17a96180381d5",
-      "productImage": "https://i.ibb.co.com/ngWBSH1/Product19.jpg",
-      "productName": "Magnifying Glass",
-      "totalPrice": {
-        "$numberInt": "204"
-      },
-      "unitPrice": {
-        "$numberInt": "12"
-      },
-      "quantity": {
-        "$numberInt": "17"
-      }
-    }
-  ],
-  "email": "mohammadyonus629@gmail.com",
-  "name": "Mohammad Yonus",
-  "deliveryStatus" : "Processing"
-}
+    "isSubscribed": true,
+    "adminNotes": "Congrats Your Are Verified User",
+    "verifiedAt": "Sun Jun 08 2025",
+    "balance": 0,
+    "transactions": [
+      
+    ]
+  },
+  {
+    "_id": "6845686ef51e55529a2c6b8e",
+    "email": "farhadhossen9036@gmail.com",
+    "name": "Farhad Hossen",
+    "phone": "01829313336",
+    "photo": "https://i.ibb.co/prMJzFy6/nexwhizz-icon.png",
+    "userType": "renter",
+    "verificationStatus": "Verified",
+    "createdAt": "2025-06-08T10:39:42.807Z",
+    "verificationData": {
+      "licenseNumber": "92020202200202",
+      "nid": "6914755324",
+      "additionalNotes": "Complete your account verification to access all features. A one-time verification fee of ৳100 is required.",
+      "licenseImage": "https://i.ibb.co/2YnzBtGx/nid.png",
+      "nidPhoto": "https://i.ibb.co/XxtM1SGL/license.jpg",
+      "status": "verified",
+      "submittedAt": "2025-06-08T10:40:15.118Z",
+      "paymentDate": "2025-06-08T10:40:22.281Z",
+      "transactionId": "VERIFY_1749379215204_farhadhossen9036_gmail_com"
+    },
+    "isSubscribed": true,
+    "adminNotes": "Congrats Your Are Verified User",
+    "verifiedAt": "Sun Jun 08 2025"
+  }
+]

@@ -92,11 +92,7 @@ function RenterBookingDetailsModal({
     const options = { year: "numeric", month: "short", day: "numeric" };
     return new Date(dateString).toLocaleDateString(undefined, options);
   };
-  //   if (!visible || !currentBooking || !carDetails || !partyDetails) return null;
-  console.log("Status:", currentBooking.status);
-  // console.log("User Role:", userRole);
-  console.log("onComplete function:", typeof onComplete);
-  console.log("actionLoading:", actionLoading);
+
   return (
     <>
       <style jsx>{`
@@ -433,13 +429,14 @@ function RenterBookingDetailsModal({
                 </div>
               </div>
             )}
-            
-
             {currentBooking.status === "completed" && (
               <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
                 <div className="flex justify-center">
                   <button
-                    onClick={onOpenReview}
+                    onClick={() => {
+                      onClose();
+                      onOpenReview();
+                    }}
                     disabled={actionLoading}
                     className={`px-8 py-3 rounded-xl primary-bg text-white font-bold text-lg hover-primary transform hover:scale-105 transition-all duration-200 shadow-lg ${
                       actionLoading

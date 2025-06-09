@@ -21,6 +21,8 @@ import {
   User,
   Users,
   Wifi,
+  ChevronRight,
+  ChevronLeft as ChevronLeftIcon,
 } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
@@ -38,10 +40,21 @@ const CarDetails = () => {
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [showAllFeatures, setShowAllFeatures] = useState(false);
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
+  const [currentReviewIndex, setCurrentReviewIndex] = useState(0);
   const { userData } = useUserData();
 
-
-  console.log(userData);
+  const colors = {
+    primary: "#0d786d",
+    secondary: "#10a599",
+    accent: "#076158",
+    light: "#edf7f6",
+    dark: "#065048",
+    text: "#334155",
+    textLight: "#64748b",
+    success: "#10b981",
+    warning: "#f59e0b",
+    danger: "#ef4444",
+  };
 
   useEffect(() => {
     const fetchCarDetails = async () => {
@@ -49,12 +62,10 @@ const CarDetails = () => {
         setLoading(true);
 
         const carResponse = await fetch(`http://localhost:9000/cars/${carId}`);
-        console.log(carResponse);
         if (!carResponse.ok) {
           throw new Error("Failed to fetch car details");
         }
         const carData = await carResponse.json();
-        console.log(carData);
 
         setCar(carData);
 
@@ -79,57 +90,8 @@ const CarDetails = () => {
     fetchCarDetails();
   }, [carId]);
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <Car className="mx-auto h-12 w-12 text-red-500 mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
-            Error Loading Car Details
-          </h3>
-          <p className="text-gray-600 mb-4">{error}</p>
-          <Link
-            to="/browse-cars"
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            Back to Browse Cars
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
-  if (!car) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <Car className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
-            Car Not Found
-          </h3>
-          <p className="text-gray-600 mb-4">
-            The car you are looking for doesnt exist or may have been removed.
-          </p>
-          <Link
-            to="/browse-cars"
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            Browse Available Cars
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
   const formatDate = (dateString) => {
+    if (!dateString) return "N/A";
     const date = new Date(dateString);
     return date.toLocaleDateString("en-US", {
       year: "numeric",
@@ -153,12 +115,80 @@ const CarDetails = () => {
     }
   };
 
+  const nextReview = () => {
+    setCurrentReviewIndex((prevIndex) =>
+      prevIndex === car.reviews.length - 1 ? 0 : prevIndex + 1
+    );
+  };
+
+  const prevReview = () => {
+    setCurrentReviewIndex((prevIndex) =>
+      prevIndex === 0 ? car.reviews.length - 1 : prevIndex - 1
+    );
+  };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div
+          className="animate-spin rounded-full h-12 w-12 border-b-2"
+          style={{ borderColor: colors.primary }}
+        ></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <Car className="mx-auto h-12 w-12 text-red-500 mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 mb-2">
+            Error Loading Car Details
+          </h3>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <Link
+            to="/browse-cars"
+            className="px-4 py-2 text-white rounded-lg transition-colors"
+            style={{ backgroundColor: colors.primary }}
+          >
+            Back to Browse Cars
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (!car) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <Car className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 mb-2">
+            Car Not Found
+          </h3>
+          <p className="text-gray-600 mb-4">
+            The car you are looking for doesn't exist or may have been removed.
+          </p>
+          <Link
+            to="/browse-cars"
+            className="px-4 py-2 text-white rounded-lg transition-colors"
+            style={{ backgroundColor: colors.primary }}
+          >
+            Browse Available Cars
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <Link
           to="/browse-cars"
-          className="flex items-center text-blue-600 hover:text-blue-800 mb-6"
+          className="flex items-center mb-6"
+          style={{ color: colors.primary }}
         >
           <ChevronLeft size={20} />
           <span className="ml-1">Back to all cars</span>
@@ -211,7 +241,7 @@ const CarDetails = () => {
                     {car.car_details.fuel_type}
                   </p>
                 </div>
-                <div className="text-2xl font-bold text-blue-600">
+                <div className="text-2xl font-bold" style={{ color: colors.primary }}>
                   ৳{car.rental_details.rental_price_per_day}
                   <span className="text-lg font-normal text-gray-500">
                     /day
@@ -221,12 +251,18 @@ const CarDetails = () => {
 
               <div className="mt-4 flex flex-wrap gap-2">
                 {owner?.verificationStatus === "Verified" && (
-                  <div className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium flex items-center gap-1">
+                  <div
+                    className="px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1"
+                    style={{ backgroundColor: colors.light, color: colors.dark }}
+                  >
                     <CheckCircle size={14} />
                     Verified Owner
                   </div>
                 )}
-                <div className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium flex items-center gap-1">
+                <div
+                  className="px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1"
+                  style={{ backgroundColor: colors.light, color: colors.dark }}
+                >
                   <Shield size={14} />
                   Approved Listing
                 </div>
@@ -367,7 +403,8 @@ const CarDetails = () => {
                     !showAllFeatures && (
                       <button
                         onClick={() => setShowAllFeatures(true)}
-                        className="mt-3 text-blue-600 hover:text-blue-800 text-sm"
+                        className="mt-3 text-sm"
+                        style={{ color: colors.primary }}
                       >
                         + {car.termsandcondition.other_features.length - 3} more
                         features
@@ -517,6 +554,90 @@ const CarDetails = () => {
                   </div>
                 )}
 
+                {/* Reviews Section */}
+                {car.reviews && car.reviews.length > 0 && (
+                  <div className="mb-8">
+                    <h2 className="text-xl font-semibold text-gray-900 mb-4">
+                      Customer Reviews
+                    </h2>
+                    <div className="relative bg-gray-50 rounded-lg p-6">
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="font-medium text-gray-900">
+                          {car.reviews.length} Reviews
+                        </h3>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={prevReview}
+                            className="p-1 rounded-full hover:bg-gray-200"
+                            disabled={car.reviews.length <= 1}
+                          >
+                            <ChevronLeftIcon
+                              size={20}
+                              className={
+                                car.reviews.length <= 1
+                                  ? "text-gray-400"
+                                  : "text-gray-700"
+                              }
+                            />
+                          </button>
+                          <button
+                            onClick={nextReview}
+                            className="p-1 rounded-full hover:bg-gray-200"
+                            disabled={car.reviews.length <= 1}
+                          >
+                            <ChevronRight
+                              size={20}
+                              className={
+                                car.reviews.length <= 1
+                                  ? "text-gray-400"
+                                  : "text-gray-700"
+                              }
+                            />
+                          </button>
+                        </div>
+                      </div>
+                      <div className="text-center">
+                        <div className="flex justify-center mb-2">
+                          {[...Array(5)].map((_, i) => (
+                            <Star
+                              key={i}
+                              size={20}
+                              className={
+                                i < car.reviews[currentReviewIndex].rating
+                                  ? "text-yellow-400 fill-yellow-400"
+                                  : "text-gray-300"
+                              }
+                            />
+                          ))}
+                        </div>
+                        <p className="text-gray-700 italic mb-4">
+                          "{car.reviews[currentReviewIndex].comment}"
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          - {car.reviews[currentReviewIndex].reviewerEmail} •{" "}
+                          {formatDate(car.reviews[currentReviewIndex].createdAt)}
+                        </p>
+                      </div>
+                      {car.reviews.length > 1 && (
+                        <div className="flex justify-center mt-4 space-x-1">
+                          {car.reviews.map((_, index) => (
+                            <button
+                              key={index}
+                              onClick={() => setCurrentReviewIndex(index)}
+                              className={`w-2 h-2 rounded-full ${
+                                currentReviewIndex === index
+                                  ? "bg-gray-700"
+                                  : "bg-gray-300"
+                              }`}
+                              aria-label={`Go to review ${index + 1}`}
+                            />
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 {/* Documents */}
                 <div>
                   <h2 className="text-xl font-semibold text-gray-900 mb-4">
@@ -530,7 +651,7 @@ const CarDetails = () => {
                         rel="noopener noreferrer"
                         className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50"
                       >
-                        <FileText size={20} className="text-blue-500" />
+                        <FileText size={20} style={{ color: colors.primary }} />
                         <div>
                           <div className="font-medium">
                             Registration Document
@@ -548,7 +669,7 @@ const CarDetails = () => {
                         rel="noopener noreferrer"
                         className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50"
                       >
-                        <FileText size={20} className="text-blue-500" />
+                        <FileText size={20} style={{ color: colors.primary }} />
                         <div>
                           <div className="font-medium">Insurance Document</div>
                           <div className="text-sm text-gray-500">
@@ -564,7 +685,10 @@ const CarDetails = () => {
               {/* Right Column - Owner Info and Booking */}
               <div>
                 {/* Owner Card */}
-                <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-6 mb-6 sticky top-6">
+                <div
+                  className="bg-white border border-gray-200 rounded-xl shadow-sm p-6 mb-6 sticky top-6"
+                  style={{ borderColor: colors.light }}
+                >
                   <h2 className="text-xl font-semibold text-gray-900 mb-4">
                     About the Owner
                   </h2>
@@ -586,7 +710,7 @@ const CarDetails = () => {
                         {owner?.userType}
                       </div>
                       {owner?.verificationStatus === "Verified" ? (
-                        <div className="flex items-center gap-1 text-sm text-blue-600">
+                        <div className="flex items-center gap-1 text-sm" style={{ color: colors.success }}>
                           <CheckCircle size={14} />
                           Verified User
                         </div>
@@ -643,7 +767,10 @@ const CarDetails = () => {
                 </div>
 
                 {/* Booking Card */}
-                <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-6 sticky top-80">
+                <div
+                  className="bg-white border border-gray-200 rounded-xl shadow-sm p-6 sticky top-80"
+                  style={{ borderColor: colors.light }}
+                >
                   <h2 className="text-xl font-semibold text-gray-900 mb-4">
                     Book This Car
                   </h2>
@@ -682,7 +809,8 @@ const CarDetails = () => {
                     <>
                       <button
                         onClick={() => setIsBookingModalOpen(true)}
-                        className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
+                        className="w-full py-3 px-4 text-white font-medium rounded-lg transition-colors"
+                        style={{ backgroundColor: colors.primary }}
                       >
                         Continue to Book
                       </button>

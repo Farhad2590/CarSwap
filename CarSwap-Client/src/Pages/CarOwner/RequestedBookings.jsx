@@ -3,8 +3,7 @@ import axios from "axios";
 import { Eye, Check, X, Clock, CheckCircle, Car, Truck } from "lucide-react";
 import useAuth from "../../hooks/useAuth";
 import { toast } from "react-toastify";
-import BookingDetailsModal from "../Shared/BookingDetailsModal";
-import RenterBookingDetailsModal from "../Shared/RenterBookingDetailsModal";
+import OwnerBookingDetailsModal from "../Shared/OwnerBookingDetailsModal";
 
 const colors = {
   primary: "#0d786d",
@@ -101,6 +100,8 @@ const RequestedBookings = () => {
         setBookings(response.data);
         setLoading(false);
       } catch (error) {
+        console.error("Failed to fetch bookings:", error);
+        toast.error("Failed to load bookings");
         setLoading(false);
       }
     };
@@ -121,6 +122,7 @@ const RequestedBookings = () => {
       setRenterDetails(renterResponse.data);
       setModalVisible(true);
     } catch (error) {
+      console.error("Failed to fetch details:", error);
       toast.error("Failed to load booking details");
     }
   };
@@ -141,6 +143,7 @@ const RequestedBookings = () => {
       }
       toast.success("Booking request accepted");
     } catch (error) {
+      console.error("Failed to accept booking:", error);
       toast.error("Failed to accept booking");
     } finally {
       setActionLoading(false);
@@ -165,6 +168,7 @@ const RequestedBookings = () => {
       }
       toast.success("Booking request rejected");
     } catch (error) {
+      console.error("Failed to reject booking:", error);
       toast.error("Failed to reject booking");
     } finally {
       setActionLoading(false);
@@ -185,7 +189,7 @@ const RequestedBookings = () => {
       setBookings(
         bookings.map((booking) =>
           booking._id === currentBooking._id
-            ? { ...booking, status: "ready_for_pickup" }
+            ? { ...booking, status: "ready_for_pickup", pickupDetails }
             : booking
         )
       );
@@ -197,6 +201,7 @@ const RequestedBookings = () => {
       setPickupDetails({ pickupTime: "", pickupInstructions: "" });
       toast.success("Pickup details set successfully");
     } catch (error) {
+      console.error("Failed to set pickup details:", error);
       toast.error("Failed to set pickup details");
     } finally {
       setActionLoading(false);
@@ -222,6 +227,7 @@ const RequestedBookings = () => {
       });
       toast.success("Marked as Picked and Payment Done");
     } catch (error) {
+      console.error("Failed to mark picked and payment done:", error);
       toast.error("Failed to mark picked and payment done");
     } finally {
       setActionLoading(false);
@@ -247,6 +253,7 @@ const RequestedBookings = () => {
       });
       toast.success("Car marked as delivered to owner");
     } catch (error) {
+      console.error("Failed to mark as delivered:", error);
       toast.error("Failed to mark as delivered");
     } finally {
       setActionLoading(false);
@@ -272,6 +279,7 @@ const RequestedBookings = () => {
       });
       toast.success("Booking marked as completed");
     } catch (error) {
+      console.error("Failed to complete booking:", error);
       toast.error("Failed to complete booking");
     } finally {
       setActionLoading(false);
@@ -473,20 +481,20 @@ const RequestedBookings = () => {
           </div>
         )}
       </div>
-      <RenterBookingDetailsModal
+
+      <OwnerBookingDetailsModal
         visible={modalVisible}
         onClose={() => setModalVisible(false)}
         carDetails={carDetails}
         partyDetails={renterDetails}
         currentBooking={currentBooking}
-        // userRole="owner"
         onSetPickupDetails={handleSetPickupDetails}
         onMarkPickedAndPaymentDone={handleMarkPickedAndPaymentDone}
         onComplete={handleCompleteBooking}
+        onMarkDelivered={handleMarkDelivered}
         pickupDetails={pickupDetails}
         setPickupDetails={setPickupDetails}
         actionLoading={actionLoading}
-        
       />
     </div>
   );

@@ -7,5 +7,7 @@ router.post("/:bookingId/cash", bookingPaymentController.recordCashPayment);
 router.get("/:bookingId", bookingPaymentController.getBookingPayments);
 router.get("/", bookingPaymentController.getAllBookingPayments);
 router.post("/:bookingId/distribute", bookingPaymentController.distributeOwnerPayment);
+router.get("/user/:email", bookingPaymentController.getPaymentsByUser);
+
 
 module.exports = router;

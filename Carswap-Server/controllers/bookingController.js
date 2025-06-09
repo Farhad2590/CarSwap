@@ -479,6 +479,22 @@ const bookingController = {
       const { bookingId } = req.params;
       const { reviewDetails } = req.body;
 
+      const booking = await BookingModel.getBookingDetails(bookingId);
+      if (!booking) {
+        return res.status(404).json({ error: "Booking not found" });
+      }
+
+      // Transfer 90% to owner
+      if (booking.paymentDetails?.amount && booking.ownerEmail) {
+        const ownerAmount = booking.paymentDetails.amount * 0.9;
+        await UserModel.updateUserBalance(
+          booking.ownerEmail,
+          ownerAmount,
+          "credit",
+          `Booking payment for booking ID: ${bookingId}`
+        );
+      }
+
       const result = await BookingModel.completeBooking(
         bookingId,
         reviewDetails
@@ -512,19 +528,65 @@ const bookingController = {
 
   markAsReviewed: async (req, res) => {
     try {
-      const { id } = req.params;
-      const result = await BookingModel.updateOne(
-        { _id: id },
-        { $set: { status: "reviewed", updatedAt: new Date().toISOString() } }
-      );
-      res.json(result);
+      const { bookingId } = req.params;
+      const result = await BookingModel.markAsReviewed(bookingId);
+
+      if (result.modifiedCount === 0) {
+        return res
+          .status(404)
+          .json({ error: "Booking not found or already reviewed" });
+      }
+
+      res.json({
+        success: true,
+        message: "Booking marked as reviewed successfully",
+        result,
+      });
     } catch (error) {
       res.status(500).json({ error: error.message });
     }
   },
 };
 
-// Helper function to update admin and owner balances
+// async function updateAdminBalance(
+//   userEmail,
+//   transactionId,
+//   amount,
+//   bookingId,
+//   paymentType = "booking"
+// ) {
+//   try {
+//     const description = `${paymentType} payment from ${userEmail} (Transaction: ${transactionId}, Booking: ${bookingId})`;
+//     console.log(amount);
+
+//     // Update admin balance (10% commission)
+//     const adminAmount = amount * 0.1;
+//     await UserModel.updateUserBalance(
+//       "carswap@gmail.com",
+//       adminAmount,
+//       "credit",
+//       description
+//     );
+
+//     // Update owner balance (90% of payment)
+//     const ownerAmount = amount * 0.9;
+//     const booking = await BookingModel.getBookingDetails(bookingId);
+//     if (booking && booking.ownerEmail) {
+//       await UserModel.updateUserBalance(
+//         booking.ownerEmail,
+//         ownerAmount,
+//         "credit",
+//         description
+//       );
+//     }
+
+//     return { adminAmount, ownerAmount };
+//   } catch (error) {
+//     console.error("Error updating balances:", error);
+//     throw error;
+//   }
+// }
+
 async function updateAdminBalance(
   userEmail,
   transactionId,
@@ -534,29 +596,17 @@ async function updateAdminBalance(
 ) {
   try {
     const description = `${paymentType} payment from ${userEmail} (Transaction: ${transactionId}, Booking: ${bookingId})`;
+    console.log(amount);
 
-    // Update admin balance (40% commission)
-    const adminAmount = amount * 0.4;
+    // Update admin balance (100% of payment)
     await UserModel.updateUserBalance(
       "carswap@gmail.com",
-      adminAmount,
+      amount,
       "credit",
       description
     );
 
-    // Update owner balance (60% of payment)
-    const ownerAmount = amount * 0.6;
-    const booking = await BookingModel.getBookingDetails(bookingId);
-    if (booking && booking.ownerEmail) {
-      await UserModel.updateUserBalance(
-        booking.ownerEmail,
-        ownerAmount,
-        "credit",
-        description
-      );
-    }
-
-    return { adminAmount, ownerAmount };
+    return { amount };
   } catch (error) {
     console.error("Error updating balances:", error);
     throw error;

@@ -250,34 +250,66 @@ const carController = {
       res.status(500).json({ error: error.message });
     }
   },
-  // Add to carController.js
   addCarReview: async (req, res) => {
     try {
       const { id } = req.params;
       const reviewData = req.body;
       reviewData.createdAt = new Date().toISOString();
+      reviewData.reviewId = new Date().getTime().toString();
 
-      const collection = await CarModel.getCollection();
-      const result = await collection.updateOne(
-        { _id: getObjectId(id) },
-        { $push: { reviews: reviewData } }
-      );
+      const result = await CarModel.addCarReview(id, reviewData);
 
-      res.status(201).json(result);
+      if (result.modifiedCount === 0) {
+        return res.status(404).json({ message: "Car not found" });
+      }
+
+      res.status(201).json({
+        success: true,
+        message: "Review added successfully",
+        review: reviewData,
+      });
     } catch (error) {
-      res.status(500).json({ error: error.message });
+      console.error("Error adding review:", error);
+      res.status(500).json({
+        error: "Failed to add review",
+        details: error.message,
+      });
     }
   },
 
   getCarReviews: async (req, res) => {
     try {
       const { id } = req.params;
-      const collection = await CarModel.getCollection();
-      const car = await collection.findOne(
-        { _id: getObjectId(id) },
-        { projection: { reviews: 1 } }
-      );
-      res.json(car?.reviews || []);
+      const reviews = await CarModel.getCarReviews(id);
+      res.json(reviews);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  },
+  getReviewsByReviewer: async (req, res) => {
+    try {
+      const { reviewerEmail } = req.params;
+      const reviews = await CarModel.getReviewsByReviewer(reviewerEmail);
+      res.json(reviews);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  },
+
+  getReviewsForOwner: async (req, res) => {
+    try {
+      const { ownerEmail } = req.params;
+      const reviews = await CarModel.getReviewsForOwner(ownerEmail);
+      res.json(reviews);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  },
+
+  getAllReviews: async (req, res) => {
+    try {
+      const reviews = await CarModel.getAllReviews();
+      res.json(reviews);
     } catch (error) {
       res.status(500).json({ error: error.message });
     }

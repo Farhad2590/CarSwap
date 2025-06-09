@@ -14,6 +14,7 @@ import {
   FaUsersCog,
   FaMoneyBillWave,
   FaCog,
+  FaCcPaypal,
 } from "react-icons/fa";
 import { IoMdCheckmarkCircleOutline } from "react-icons/io";
 import { Menu, X } from "lucide-react";
@@ -55,9 +56,9 @@ const Dashboard = () => {
       icon: <FaMoneyBillWave className="h-5 w-5" />,
     },
     {
-      name: "System Settings",
-      path: "/dashboard/settings",
-      icon: <FaCog className="h-5 w-5" />,
+      name: "All Reviews",
+      path: "/dashboard/allReviews",
+      icon: <FaStar className="h-5 w-5" />,
     },
     {
       name: "Verification Requests",
@@ -88,10 +89,20 @@ const Dashboard = () => {
       path: "/dashboard/booking-requests",
       icon: <FaClipboardList className="h-5 w-5" />,
     },
+    // {
+    //   name: "Earnings",
+    //   path: "/dashboard/earnings",
+    //   icon: <FaMoneyBillWave className="h-5 w-5" />,
+    // },
     {
-      name: "Earnings",
-      path: "/dashboard/earnings",
-      icon: <FaMoneyBillWave className="h-5 w-5" />,
+      name: "Balance & Withdrawal",
+      path: "/dashboard/balanceWithdrawal",
+      icon: <FaCcPaypal className="h-5 w-5" />,
+    },
+    {
+      name: "Car Reviews",
+      path: "/dashboard/given-reviews",
+      icon: <FaStar className="h-5 w-5" />,
     },
   ];
 
@@ -113,10 +124,11 @@ const Dashboard = () => {
       icon: <FaCalendarAlt className="h-5 w-5" />,
     },
     {
-      name: "Payment Methods",
-      path: "/dashboard/payment-methods",
+      name: "Payment History",
+      path: "/dashboard/payment-history",
       icon: <FaCreditCard className="h-5 w-5" />,
     },
+    
     {
       name: "My Reviews",
       path: "/dashboard/my-reviews",

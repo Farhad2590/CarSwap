@@ -1,4 +1,5 @@
 const { connectToDatabase, getObjectId } = require("../config/db");
+const UserModel = require("../models/userModel");
 
 class WithdrawalModel {
   static async getCollection() {
@@ -27,7 +28,10 @@ class WithdrawalModel {
 
   static async getPendingWithdrawals() {
     const collection = await this.getCollection();
-    return collection.find({ status: "pending" }).sort({ createdAt: 1 }).toArray();
+    return collection
+      .find({ status: "pending" })
+      .sort({ createdAt: 1 })
+      .toArray();
   }
 
   static async approveWithdrawal(withdrawalId, adminNotes = "") {
@@ -79,6 +83,16 @@ class WithdrawalModel {
 
   static async rejectWithdrawal(withdrawalId, adminNotes = "") {
     const collection = await this.getCollection();
+    const withdrawal = await this.getWithdrawalById(withdrawalId);
+
+    if (!withdrawal) {
+      throw new Error("Withdrawal not found");
+    }
+
+    if (withdrawal.status !== "pending") {
+      throw new Error("Withdrawal is not in pending state");
+    }
+
     const result = await collection.updateOne(
       { _id: getObjectId(withdrawalId) },
       {

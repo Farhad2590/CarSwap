@@ -9,9 +9,25 @@ const BalanceandWithdrawal = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [withdrawalAmount, setWithdrawalAmount] = useState('');
     const [paymentMethod, setPaymentMethod] = useState('bank');
+    const [accountNumber, setAccountNumber] = useState('');
     const [activeTab, setActiveTab] = useState('withdrawals');
     const [isLoading, setIsLoading] = useState(false);
-    const{user} = useAuth();    
+    const [error, setError] = useState('');
+    const [success, setSuccess] = useState('');
+    const {user} = useAuth();    
+
+    const colors = {
+        primary: "#0d786d",
+        secondary: "#10a599",
+        accent: "#076158",
+        light: "#edf7f6",
+        dark: "#065048",
+        text: "#334155",
+        textLight: "#64748b",
+        success: "#10b981",
+        warning: "#f59e0b",
+        danger: "#ef4444",
+    };
 
     useEffect(() => {
         fetchBalance();
@@ -23,8 +39,6 @@ const BalanceandWithdrawal = () => {
         try {
             const response = await axios.get(`http://localhost:9000/users/${user?.email}/balance`);
             setBalance(response.data.balance);
-            // console.log(response);
-            
         } catch (error) {
             console.error('Error fetching balance:', error);
         }
@@ -51,12 +65,19 @@ const BalanceandWithdrawal = () => {
     const handleWithdrawalSubmit = async (e) => {
         e.preventDefault();
         setIsLoading(true);
+        setError('');
+        setSuccess('');
         
         try {
-            await axios.post('/withdrawals', {
-                email : user?.email,
+            if (!accountNumber) {
+                throw new Error('Please enter your account number');
+            }
+
+            await axios.post('http://localhost:9000/withdrawals', {
+                ownerEmail: user?.email,
                 amount: parseFloat(withdrawalAmount),
-                paymentMethod
+                paymentMethod,
+                accountNumber
             });
             
             // Refresh data
@@ -65,13 +86,14 @@ const BalanceandWithdrawal = () => {
             
             // Reset form
             setWithdrawalAmount('');
+            setAccountNumber('');
             setPaymentMethod('bank');
             setIsModalOpen(false);
             
-            alert('Withdrawal request submitted successfully!');
+            setSuccess('Withdrawal request submitted successfully!');
         } catch (error) {
             console.error('Error submitting withdrawal:', error);
-            alert(error.response?.data?.error || 'Failed to submit withdrawal');
+            setError(error.response?.data?.error || error.message || 'Failed to submit withdrawal');
         } finally {
             setIsLoading(false);
         }
@@ -84,25 +106,60 @@ const BalanceandWithdrawal = () => {
     const formatCurrency = (amount) => {
         return new Intl.NumberFormat('en-US', {
             style: 'currency',
-            currency: 'BDT'
+            currency: 'USD'
         }).format(amount);
     };
 
     return (
-        <div className="container mx-auto px-4 py-8">
+        <div style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
             {/* Balance Card */}
-            <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-                <h2 className="text-2xl font-bold text-gray-800 mb-4">Your Balance</h2>
-                <div className="flex items-center justify-between">
+            <div style={{ 
+                backgroundColor: 'white', 
+                borderRadius: '8px', 
+                padding: '24px', 
+                marginBottom: '24px',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+            }}>
+                <h2 style={{ 
+                    fontSize: '1.5rem', 
+                    fontWeight: '600', 
+                    color: colors.text,
+                    marginBottom: '16px'
+                }}>
+                    Your Balance
+                </h2>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <div>
-                        <p className="text-3xl font-bold text-indigo-600">
+                        <p style={{ 
+                            fontSize: '2rem', 
+                            fontWeight: '700', 
+                            color: colors.primary,
+                            marginBottom: '4px'
+                        }}>
                             {formatCurrency(balance)}
                         </p>
-                        <p className="text-gray-600">Available for withdrawal</p>
+                        <p style={{ 
+                            color: colors.textLight,
+                            fontSize: '0.875rem'
+                        }}>
+                            Available for withdrawal
+                        </p>
                     </div>
                     <button
                         onClick={() => setIsModalOpen(true)}
-                        className="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-6 rounded-lg transition duration-200"
+                        style={{
+                            backgroundColor: balance <= 0 ? colors.textLight : colors.primary,
+                            color: 'white',
+                            fontWeight: '500',
+                            padding: '10px 24px',
+                            borderRadius: '6px',
+                            border: 'none',
+                            cursor: balance <= 0 ? 'not-allowed' : 'pointer',
+                            transition: 'background-color 0.2s',
+                            ':hover': {
+                                backgroundColor: balance <= 0 ? colors.textLight : colors.secondary
+                            }
+                        }}
                         disabled={balance <= 0}
                     >
                         Request Withdrawal
@@ -111,59 +168,180 @@ const BalanceandWithdrawal = () => {
             </div>
 
             {/* Tabs */}
-            <div className="bg-white rounded-lg shadow-md overflow-hidden">
-                <div className="border-b border-gray-200">
-                    <nav className="flex -mb-px">
+            <div style={{ 
+                backgroundColor: 'white', 
+                borderRadius: '8px', 
+                overflow: 'hidden',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+            }}>
+                <div style={{ borderBottom: `1px solid ${colors.light}` }}>
+                    <nav style={{ display: 'flex' }}>
                         <button
                             onClick={() => setActiveTab('withdrawals')}
-                            className={`py-4 px-6 text-center border-b-2 font-medium text-sm ${activeTab === 'withdrawals' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
+                            style={{
+                                padding: '16px 24px',
+                                borderBottom: `2px solid ${activeTab === 'withdrawals' ? colors.primary : 'transparent'}`,
+                                color: activeTab === 'withdrawals' ? colors.primary : colors.textLight,
+                                fontWeight: '500',
+                                fontSize: '0.875rem',
+                                backgroundColor: 'transparent',
+                                border: 'none',
+                                cursor: 'pointer',
+                                ':hover': {
+                                    color: activeTab === 'withdrawals' ? colors.primary : colors.text
+                                }
+                            }}
                         >
                             Withdrawal History
                         </button>
                         <button
                             onClick={() => setActiveTab('payments')}
-                            className={`py-4 px-6 text-center border-b-2 font-medium text-sm ${activeTab === 'payments' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
+                            style={{
+                                padding: '16px 24px',
+                                borderBottom: `2px solid ${activeTab === 'payments' ? colors.primary : 'transparent'}`,
+                                color: activeTab === 'payments' ? colors.primary : colors.textLight,
+                                fontWeight: '500',
+                                fontSize: '0.875rem',
+                                backgroundColor: 'transparent',
+                                border: 'none',
+                                cursor: 'pointer',
+                                ':hover': {
+                                    color: activeTab === 'payments' ? colors.primary : colors.text
+                                }
+                            }}
                         >
                             Payment History
                         </button>
                     </nav>
                 </div>
 
-                <div className="p-6">
+                <div style={{ padding: '24px' }}>
                     {activeTab === 'withdrawals' ? (
                         <div>
-                            <h3 className="text-lg font-medium text-gray-900 mb-4">Withdrawal Requests</h3>
+                            <h3 style={{ 
+                                fontSize: '1.125rem', 
+                                fontWeight: '500', 
+                                color: colors.text,
+                                marginBottom: '16px'
+                            }}>
+                                Withdrawal Requests
+                            </h3>
                             {withdrawals.length === 0 ? (
-                                <p className="text-gray-500">No withdrawal requests found</p>
+                                <p style={{ color: colors.textLight }}>No withdrawal requests found</p>
                             ) : (
-                                <div className="overflow-x-auto">
-                                    <table className="min-w-full divide-y divide-gray-200">
-                                        <thead className="bg-gray-50">
+                                <div style={{ overflowX: 'auto' }}>
+                                    <table style={{ 
+                                        width: '100%', 
+                                        borderCollapse: 'collapse',
+                                        minWidth: '600px'
+                                    }}>
+                                        <thead style={{ backgroundColor: colors.light }}>
                                             <tr>
-                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
-                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Method</th>
-                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                                <th style={{ 
+                                                    padding: '12px 16px', 
+                                                    textAlign: 'left', 
+                                                    fontSize: '0.75rem',
+                                                    fontWeight: '500',
+                                                    color: colors.textLight,
+                                                    textTransform: 'uppercase'
+                                                }}>
+                                                    Date
+                                                </th>
+                                                <th style={{ 
+                                                    padding: '12px 16px', 
+                                                    textAlign: 'left', 
+                                                    fontSize: '0.75rem',
+                                                    fontWeight: '500',
+                                                    color: colors.textLight,
+                                                    textTransform: 'uppercase'
+                                                }}>
+                                                    Amount
+                                                </th>
+                                                <th style={{ 
+                                                    padding: '12px 16px', 
+                                                    textAlign: 'left', 
+                                                    fontSize: '0.75rem',
+                                                    fontWeight: '500',
+                                                    color: colors.textLight,
+                                                    textTransform: 'uppercase'
+                                                }}>
+                                                    Method
+                                                </th>
+                                                <th style={{ 
+                                                    padding: '12px 16px', 
+                                                    textAlign: 'left', 
+                                                    fontSize: '0.75rem',
+                                                    fontWeight: '500',
+                                                    color: colors.textLight,
+                                                    textTransform: 'uppercase'
+                                                }}>
+                                                    Account
+                                                </th>
+                                                <th style={{ 
+                                                    padding: '12px 16px', 
+                                                    textAlign: 'left', 
+                                                    fontSize: '0.75rem',
+                                                    fontWeight: '500',
+                                                    color: colors.textLight,
+                                                    textTransform: 'uppercase'
+                                                }}>
+                                                    Status
+                                                </th>
                                             </tr>
                                         </thead>
-                                        <tbody className="bg-white divide-y divide-gray-200">
+                                        <tbody>
                                             {withdrawals.map((withdrawal) => (
-                                                <tr key={withdrawal._id}>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                <tr key={withdrawal._id} style={{ 
+                                                    borderBottom: `1px solid ${colors.light}`,
+                                                    ':hover': {
+                                                        backgroundColor: colors.light
+                                                    }
+                                                }}>
+                                                    <td style={{ 
+                                                        padding: '16px', 
+                                                        fontSize: '0.875rem',
+                                                        color: colors.text
+                                                    }}>
                                                         {formatDate(withdrawal.createdAt)}
                                                     </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                                    <td style={{ 
+                                                        padding: '16px', 
+                                                        fontSize: '0.875rem',
+                                                        fontWeight: '500',
+                                                        color: colors.text
+                                                    }}>
                                                         {formatCurrency(withdrawal.amount)}
                                                     </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                    <td style={{ 
+                                                        padding: '16px', 
+                                                        fontSize: '0.875rem',
+                                                        color: colors.text,
+                                                        textTransform: 'capitalize'
+                                                    }}>
                                                         {withdrawal.paymentMethod}
                                                     </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap">
-                                                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                                                            withdrawal.status === 'completed' ? 'bg-green-100 text-green-800' :
-                                                            withdrawal.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                                                            'bg-red-100 text-red-800'
-                                                        }`}>
+                                                    <td style={{ 
+                                                        padding: '16px', 
+                                                        fontSize: '0.875rem',
+                                                        color: colors.text
+                                                    }}>
+                                                        {withdrawal.accountNumber || 'N/A'}
+                                                    </td>
+                                                    <td style={{ padding: '16px' }}>
+                                                        <span style={{ 
+                                                            padding: '4px 8px',
+                                                            fontSize: '0.75rem',
+                                                            fontWeight: '600',
+                                                            borderRadius: '9999px',
+                                                            backgroundColor: 
+                                                                withdrawal.status === 'completed' ? '#d1fae5' :
+                                                                withdrawal.status === 'pending' ? '#fef3c7' :
+                                                                '#fee2e2',
+                                                            color: 
+                                                                withdrawal.status === 'completed' ? colors.success :
+                                                                withdrawal.status === 'pending' ? colors.warning :
+                                                                colors.danger
+                                                        }}>
                                                             {withdrawal.status}
                                                         </span>
                                                     </td>
@@ -176,37 +354,110 @@ const BalanceandWithdrawal = () => {
                         </div>
                     ) : (
                         <div>
-                            <h3 className="text-lg font-medium text-gray-900 mb-4">Payment History</h3>
+                            <h3 style={{ 
+                                fontSize: '1.125rem', 
+                                fontWeight: '500', 
+                                color: colors.text,
+                                marginBottom: '16px'
+                            }}>
+                                Payment History
+                            </h3>
                             {payments.length === 0 ? (
-                                <p className="text-gray-500">No payment history found</p>
+                                <p style={{ color: colors.textLight }}>No payment history found</p>
                             ) : (
-                                <div className="overflow-x-auto">
-                                    <table className="min-w-full divide-y divide-gray-200">
-                                        <thead className="bg-gray-50">
+                                <div style={{ overflowX: 'auto' }}>
+                                    <table style={{ 
+                                        width: '100%', 
+                                        borderCollapse: 'collapse',
+                                        minWidth: '600px'
+                                    }}>
+                                        <thead style={{ backgroundColor: colors.light }}>
                                             <tr>
-                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
-                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Purpose</th>
-                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                                <th style={{ 
+                                                    padding: '12px 16px', 
+                                                    textAlign: 'left', 
+                                                    fontSize: '0.75rem',
+                                                    fontWeight: '500',
+                                                    color: colors.textLight,
+                                                    textTransform: 'uppercase'
+                                                }}>
+                                                    Date
+                                                </th>
+                                                <th style={{ 
+                                                    padding: '12px 16px', 
+                                                    textAlign: 'left', 
+                                                    fontSize: '0.75rem',
+                                                    fontWeight: '500',
+                                                    color: colors.textLight,
+                                                    textTransform: 'uppercase'
+                                                }}>
+                                                    Amount
+                                                </th>
+                                                <th style={{ 
+                                                    padding: '12px 16px', 
+                                                    textAlign: 'left', 
+                                                    fontSize: '0.75rem',
+                                                    fontWeight: '500',
+                                                    color: colors.textLight,
+                                                    textTransform: 'uppercase'
+                                                }}>
+                                                    Purpose
+                                                </th>
+                                                <th style={{ 
+                                                    padding: '12px 16px', 
+                                                    textAlign: 'left', 
+                                                    fontSize: '0.75rem',
+                                                    fontWeight: '500',
+                                                    color: colors.textLight,
+                                                    textTransform: 'uppercase'
+                                                }}>
+                                                    Status
+                                                </th>
                                             </tr>
                                         </thead>
-                                        <tbody className="bg-white divide-y divide-gray-200">
+                                        <tbody>
                                             {payments.map((payment) => (
-                                                <tr key={payment._id}>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                <tr key={payment._id} style={{ 
+                                                    borderBottom: `1px solid ${colors.light}`,
+                                                    ':hover': {
+                                                        backgroundColor: colors.light
+                                                    }
+                                                }}>
+                                                    <td style={{ 
+                                                        padding: '16px', 
+                                                        fontSize: '0.875rem',
+                                                        color: colors.text
+                                                    }}>
                                                         {formatDate(payment.createdAt)}
                                                     </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                                    <td style={{ 
+                                                        padding: '16px', 
+                                                        fontSize: '0.875rem',
+                                                        fontWeight: '500',
+                                                        color: colors.text
+                                                    }}>
                                                         {formatCurrency(payment.amount)}
                                                     </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                    <td style={{ 
+                                                        padding: '16px', 
+                                                        fontSize: '0.875rem',
+                                                        color: colors.text
+                                                    }}>
                                                         {payment.purpose || 'N/A'}
                                                     </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap">
-                                                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                                                            payment.status === 'completed' ? 'bg-green-100 text-green-800' :
-                                                            'bg-yellow-100 text-yellow-800'
-                                                        }`}>
+                                                    <td style={{ padding: '16px' }}>
+                                                        <span style={{ 
+                                                            padding: '4px 8px',
+                                                            fontSize: '0.75rem',
+                                                            fontWeight: '600',
+                                                            borderRadius: '9999px',
+                                                            backgroundColor: 
+                                                                payment.status === 'completed' ? '#d1fae5' :
+                                                                '#fef3c7',
+                                                            color: 
+                                                                payment.status === 'completed' ? colors.success :
+                                                                colors.warning
+                                                        }}>
                                                             {payment.status}
                                                         </span>
                                                     </td>
@@ -223,24 +474,104 @@ const BalanceandWithdrawal = () => {
 
             {/* Withdrawal Modal */}
             {isModalOpen && (
-                <div className="fixed z-10 inset-0 overflow-y-auto">
-                    <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-                        <div className="fixed inset-0 transition-opacity" aria-hidden="true">
-                            <div className="absolute inset-0 bg-gray-500 opacity-75"></div>
-                        </div>
-                        <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-                        <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-                            <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                                <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">Request Withdrawal</h3>
+                <div style={{
+                    position: 'fixed',
+                    zIndex: '50',
+                    inset: '0',
+                    overflowY: 'auto'
+                }}>
+                    <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        minHeight: '100vh',
+                        padding: '16px',
+                        textAlign: 'center'
+                    }}>
+                        <div style={{
+                            position: 'fixed',
+                            inset: '0',
+                            backgroundColor: 'rgba(0,0,0,0.5)',
+                            transitionProperty: 'opacity',
+                            transitionTimingFunction: 'cubic-bezier(0.4, 0, 0.2, 1)',
+                            transitionDuration: '150ms'
+                        }}></div>
+                        <div style={{
+                            position: 'relative',
+                            backgroundColor: 'white',
+                            borderRadius: '8px',
+                            overflow: 'hidden',
+                            width: '100%',
+                            maxWidth: '32rem',
+                            margin: '0 auto',
+                            boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)',
+                            transform: 'translateY(0)',
+                            transitionProperty: 'transform',
+                            transitionTimingFunction: 'cubic-bezier(0.4, 0, 0.2, 1)',
+                            transitionDuration: '150ms'
+                        }}>
+                            <div style={{ padding: '24px' }}>
+                                <h3 style={{ 
+                                    fontSize: '1.125rem', 
+                                    fontWeight: '500', 
+                                    color: colors.text,
+                                    marginBottom: '16px'
+                                }}>
+                                    Request Withdrawal
+                                </h3>
+                                
+                                {error && (
+                                    <div style={{ 
+                                        color: colors.danger, 
+                                        backgroundColor: '#fee2e2', 
+                                        padding: '12px', 
+                                        borderRadius: '4px',
+                                        marginBottom: '16px',
+                                        fontSize: '0.875rem'
+                                    }}>
+                                        {error}
+                                    </div>
+                                )}
+                                
+                                {success && (
+                                    <div style={{ 
+                                        color: colors.success, 
+                                        backgroundColor: '#d1fae5', 
+                                        padding: '12px', 
+                                        borderRadius: '4px',
+                                        marginBottom: '16px',
+                                        fontSize: '0.875rem'
+                                    }}>
+                                        {success}
+                                    </div>
+                                )}
+
                                 <form onSubmit={handleWithdrawalSubmit}>
-                                    <div className="mb-4">
-                                        <label htmlFor="amount" className="block text-sm font-medium text-gray-700 mb-1">
+                                    <div style={{ marginBottom: '16px' }}>
+                                        <label htmlFor="amount" style={{ 
+                                            display: 'block', 
+                                            fontSize: '0.875rem',
+                                            fontWeight: '500',
+                                            color: colors.text,
+                                            marginBottom: '4px'
+                                        }}>
                                             Amount
                                         </label>
                                         <input
                                             type="number"
                                             id="amount"
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                                            style={{
+                                                width: '100%',
+                                                padding: '8px 12px',
+                                                borderRadius: '4px',
+                                                border: `1px solid ${colors.textLight}`,
+                                                fontSize: '0.875rem',
+                                                ':focus': {
+                                                    outline: 'none',
+                                                    borderColor: colors.primary,
+                                                    boxShadow: `0 0 0 2px ${colors.light}`
+                                                }
+                                            }}
                                             value={withdrawalAmount}
                                             onChange={(e) => setWithdrawalAmount(e.target.value)}
                                             min="0"
@@ -248,17 +579,40 @@ const BalanceandWithdrawal = () => {
                                             step="0.01"
                                             required
                                         />
-                                        <p className="mt-1 text-sm text-gray-500">
+                                        <p style={{ 
+                                            marginTop: '4px',
+                                            fontSize: '0.75rem',
+                                            color: colors.textLight
+                                        }}>
                                             Available: {formatCurrency(balance)}
                                         </p>
                                     </div>
-                                    <div className="mb-4">
-                                        <label htmlFor="paymentMethod" className="block text-sm font-medium text-gray-700 mb-1">
+                                    
+                                    <div style={{ marginBottom: '16px' }}>
+                                        <label htmlFor="paymentMethod" style={{ 
+                                            display: 'block', 
+                                            fontSize: '0.875rem',
+                                            fontWeight: '500',
+                                            color: colors.text,
+                                            marginBottom: '4px'
+                                        }}>
                                             Payment Method
                                         </label>
                                         <select
                                             id="paymentMethod"
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                                            style={{
+                                                width: '100%',
+                                                padding: '8px 12px',
+                                                borderRadius: '4px',
+                                                border: `1px solid ${colors.textLight}`,
+                                                fontSize: '0.875rem',
+                                                backgroundColor: 'white',
+                                                ':focus': {
+                                                    outline: 'none',
+                                                    borderColor: colors.primary,
+                                                    boxShadow: `0 0 0 2px ${colors.light}`
+                                                }
+                                            }}
                                             value={paymentMethod}
                                             onChange={(e) => setPaymentMethod(e.target.value)}
                                             required
@@ -269,20 +623,95 @@ const BalanceandWithdrawal = () => {
                                             <option value="rocket">Rocket</option>
                                         </select>
                                     </div>
-                                    <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                                    
+                                    <div style={{ marginBottom: '24px' }}>
+                                        <label htmlFor="accountNumber" style={{ 
+                                            display: 'block', 
+                                            fontSize: '0.875rem',
+                                            fontWeight: '500',
+                                            color: colors.text,
+                                            marginBottom: '4px'
+                                        }}>
+                                            {paymentMethod === 'bank' ? 'Bank Account Number' : 
+                                             paymentMethod === 'bkash' ? 'bKash Number' :
+                                             paymentMethod === 'nagad' ? 'Nagad Number' : 'Rocket Number'}
+                                        </label>
+                                        <input
+                                            type="text"
+                                            id="accountNumber"
+                                            style={{
+                                                width: '100%',
+                                                padding: '8px 12px',
+                                                borderRadius: '4px',
+                                                border: `1px solid ${colors.textLight}`,
+                                                fontSize: '0.875rem',
+                                                ':focus': {
+                                                    outline: 'none',
+                                                    borderColor: colors.primary,
+                                                    boxShadow: `0 0 0 2px ${colors.light}`
+                                                }
+                                            }}
+                                            value={accountNumber}
+                                            onChange={(e) => setAccountNumber(e.target.value)}
+                                            placeholder={
+                                                paymentMethod === 'bank' ? 'Enter bank account number' : 
+                                                paymentMethod === 'bkash' ? 'Enter bKash number' :
+                                                paymentMethod === 'nagad' ? 'Enter Nagad number' : 'Enter Rocket number'
+                                            }
+                                            required
+                                        />
+                                    </div>
+
+                                    <div style={{ 
+                                        display: 'flex', 
+                                        justifyContent: 'flex-end',
+                                        gap: '12px'
+                                    }}>
+                                        <button
+                                            type="button"
+                                            style={{
+                                                padding: '8px 16px',
+                                                borderRadius: '4px',
+                                                border: `1px solid ${colors.textLight}`,
+                                                backgroundColor: 'white',
+                                                color: colors.text,
+                                                fontWeight: '500',
+                                                fontSize: '0.875rem',
+                                                cursor: 'pointer',
+                                                ':hover': {
+                                                    backgroundColor: colors.light
+                                                }
+                                            }}
+                                            onClick={() => {
+                                                setIsModalOpen(false);
+                                                setError('');
+                                                setSuccess('');
+                                            }}
+                                        >
+                                            Cancel
+                                        </button>
                                         <button
                                             type="submit"
-                                            className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm"
+                                            style={{
+                                                padding: '8px 16px',
+                                                borderRadius: '4px',
+                                                border: 'none',
+                                                backgroundColor: colors.primary,
+                                                color: 'white',
+                                                fontWeight: '500',
+                                                fontSize: '0.875rem',
+                                                cursor: 'pointer',
+                                                ':hover': {
+                                                    backgroundColor: colors.secondary
+                                                },
+                                                ':disabled': {
+                                                    backgroundColor: colors.textLight,
+                                                    cursor: 'not-allowed'
+                                                }
+                                            }}
                                             disabled={isLoading}
                                         >
                                             {isLoading ? 'Processing...' : 'Submit Request'}
-                                        </button>
-                                        <button
-                                            type="button"
-                                            className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
-                                            onClick={() => setIsModalOpen(false)}
-                                        >
-                                            Cancel
                                         </button>
                                     </div>
                                 </form>

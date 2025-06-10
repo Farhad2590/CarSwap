@@ -17,7 +17,7 @@ import {
   FaCcPaypal,
 } from "react-icons/fa";
 import { IoMdCheckmarkCircleOutline } from "react-icons/io";
-import { Menu, X } from "lucide-react";
+import { BanknoteArrowDown, Menu, X } from "lucide-react";
 import useAdmin from "../hooks/useAdmin";
 import useOwner from "../hooks/useOwner";
 import useRenter from "../hooks/useRenter";
@@ -64,6 +64,11 @@ const Dashboard = () => {
       name: "Verification Requests",
       path: "/dashboard/verification-requests",
       icon: <IoMdCheckmarkCircleOutline className="h-5 w-5" />,
+    },
+    {
+      name: "Withdrawal Requests",
+      path: "/dashboard/withdrawalRequests",
+      icon: <BanknoteArrowDown className="h-5 w-5" />,
     },
   ];
 

@@ -28,6 +28,7 @@ import AllReviews from "../Pages/Admin/AllReviews";
 import PaymentHistory from "../Pages/CarRenter/PaymentHistory";
 import BalanceandWithdrawal from "../Pages/CarOwner/BalanceandWithdrawal";
 import Earings from "../Pages/CarOwner/Earings";
+import WithdrawalRequests from "../Pages/Admin/WithdrawalRequests";
 
 export const router = createBrowserRouter([
   {
@@ -103,10 +104,10 @@ export const router = createBrowserRouter([
         path: "/dashboard/allReviews",
         element: <AllReviews />,
       },
-      // {
-      //   path: "/dashboard/earnings",
-      //   element: <Earings />,
-      // },
+      {
+        path: "/dashboard/withdrawalRequests",
+        element: <WithdrawalRequests />,
+      },
 
       //CarOwner
       {

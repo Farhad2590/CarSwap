@@ -11,7 +11,7 @@ const { connectToDatabase } = require("./config/db");
 const bookingRoutes = require("./routes/bookingRoutes");
 const bookingPaymentRoutes = require("./routes/bookingPaymentRoutes");
 const subscriptionPaymentRoutes = require("./routes/subscriptionPaymentRoutes");
-
+const withdrawalRoutes = require("./routes/withdrawalRoutes");
 const app = express();
 const port = process.env.PORT || 9000;
 
@@ -39,6 +39,7 @@ app.use("/booking", bookingRoutes);
 app.use("/payments", paymentRoutes);
 app.use('/booking-payments', bookingPaymentRoutes);
 app.use("/subscription-payments", subscriptionPaymentRoutes);
+app.use("/withdrawals", withdrawalRoutes);
 
 // Home route
 app.get("/", (req, res) => {

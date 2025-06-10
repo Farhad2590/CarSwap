@@ -4,7 +4,7 @@ const UserModel = require("../models/userModel");
 const withdrawalController = {
   createWithdrawal: async (req, res) => {
     try {
-      const { ownerEmail, amount, paymentMethod } = req.body;
+      const { ownerEmail, amount, paymentMethod, accountNumber } = req.body;
 
       // Check if owner has sufficient balance
       const owner = await UserModel.getUserByEmail(ownerEmail);
@@ -16,6 +16,7 @@ const withdrawalController = {
         ownerEmail,
         amount,
         paymentMethod,
+        accountNumber,
       };
 
       const result = await WithdrawalModel.createWithdrawal(withdrawalData);
@@ -55,7 +56,7 @@ const withdrawalController = {
       );
       res.json(result);
     } catch (error) {
-      res.status(500).json({ error: error.message });
+      res.status(400).json({ error: error.message });
     }
   },
 
@@ -70,7 +71,7 @@ const withdrawalController = {
       );
       res.json(result);
     } catch (error) {
-      res.status(500).json({ error: error.message });
+      res.status(400).json({ error: error.message });
     }
   },
 };
